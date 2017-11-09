@@ -12,6 +12,8 @@ Special Events:
 ]]
 
 --Requirements--
+io.stdout:setvbuf("no")
+
 local events = require("Engine.events")
 
 function love.run()
@@ -20,13 +22,6 @@ function love.run()
     love.math.setRandomSeed(os.time()) --Set random seed
   end
   
-  if love.load then love.load(arg) end --Call love.load
-
-  -- We don't want the first frame's dt to include time taken by love.load.
-  if love.timer then love.timer.step() end
-
-  local dt = 0
-  
   --An outer loop for soft restarting.
   while true do
     local restart = false --The soft restart flag
@@ -34,6 +29,13 @@ function love.run()
     events:registerEvent("love:restart",function()
       restart = true
     end)
+    
+    require("BootLoader") --Start the bootloader.
+    
+    -- We don't want the first frame's dt to include time taken by the bootloader.
+    if love.timer then love.timer.step() end
+    
+    local dt = 0
     
     -- Main loop time.
     while true do
