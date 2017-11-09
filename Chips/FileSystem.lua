@@ -357,7 +357,7 @@ return function(Config)
     if readonly(to) then return error("To Path: Access denied.") end
     
     local csize = getSizeRecursive(from)
-    if csize > fs.getFreeSpace() then return error("No enough space !") end
+    if Usage + csize > Size then return error("No enough space !") end
     
     createPath(RootDir..to)
     
@@ -411,7 +411,74 @@ return function(Config)
     end
   end
   
-  Usage = getSizeRecursive("")
+  --Read a file content
+  function fs.read(path)
+    Verify(path,"string","Path")
+    
+    path = sanitizePath(path)
+    
+    if not love.filesystem.exists(RootDir..path) then return error("File doesn't exists.") end
+    if love.filesystem.isDirectory(RootDir..path) then return error("Can't read content of a directory.") end
+    
+    return love.filesystem.read(RootDir..path)
+  end
+  
+  --Return an iterator for file content
+  function fs.lines(path)
+    Verify(path,"string","Path")
+    
+    path = sanitizePath(path)
+    
+    if not love.filesystem.exists(RootDir..path) then return error("File doesn't exists.") end
+    if love.filesystem.isDirectory(RootDir..path) then return error("Can't read content of a directory.") end
+    
+    return love.filesystem.lines(RootDir..path)
+  end
+  
+  --Write a file
+  function fs.write(path,data)
+    Verify(path,"string","Path")
+    Verify(path,"string","Data")
+    
+    path = sanitizePath(path)
+    
+    if love.filesystem.isDirectory(RootDir..path) then return error("Can't write on a directory.") end
+    
+    local fsize = data:len()
+    if Usage + fsize > Size then error("No enough space.") end
+    
+    createPath(fs.getDir(path))
+    love.filesystem.write(RootDir..path,data)
+    
+    Usage = Usage + fsize
+  end
+  
+  --Append data to a file
+  function fs.append(path,data)
+    Verify(path,"string","Path")
+    Verify(path,"string","Data")
+    
+    path = sanitizePath(path)
+    
+    if love.filesystem.isDirectory(RootDir..path) then return error("Can't append data on a directory.") end
+    
+    local asize = data:len()
+    if Usage + fsize > Size then error("No enough space.") end
+    
+    createPath(fs.getDir(path))
+    
+    if love.filesystem.exists(RootDir..path) then
+      love.filesystem.append(RootDir..path,data)
+    else
+      love.filesystem.write(RootDir..path,data)
+    end
+    
+    Usage = Usage + fsize
+  end
+  
+  events:registerEvent("Chip:PreInitialize",function(APIS,DevKit)
+    Usage = getSizeRecursive("") --Get the disk usage
+  end)
 
   return fs, {"FileSystem","fs"}, devkit
 end
