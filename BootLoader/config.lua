@@ -1,3 +1,8 @@
+--[[
+--==Contributers==--
+- Rami Sabbagh (RamiLego4Game)
+]]
+
 local conf = {}
 
 conf.Version = {
@@ -13,10 +18,19 @@ conf.Chips = {
   --The chips are loaded in this order:
   {
     Chip = "Graphics",
-    Title = "TREE-2 "..conf.VersionStr
+    Title = "TREE-2 "..conf.VersionStr,
+    Width = 480,
+    Height = 320,
+    Scale = 2,
+    PerfectScale = false
   },
+
   {
     Chip = "FileSystem",
-    Size = 25*1024*1024 --25mb.
+    Size = 25*1024*1024, --25mb.
+
+    RootDir = "/Storage/"
   }
 }
+
+return conf

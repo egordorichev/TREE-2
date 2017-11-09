@@ -1,3 +1,8 @@
+--[[
+--==Contributers==--
+- Rami Sabbagh (RamiLego4Game)
+]]
+
 --TREE-2 Events System
 
 local reg = {} --The list of registered events
