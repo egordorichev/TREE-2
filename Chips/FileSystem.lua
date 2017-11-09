@@ -443,6 +443,7 @@ return function(Config)
     path = sanitizePath(path)
     
     if love.filesystem.isDirectory(RootDir..path) then return error("Can't write on a directory.") end
+    if readonly(path) then return error("Access denied.") end
     
     local fsize = data:len()
     if Usage + fsize > Size then error("No enough space.") end
@@ -461,6 +462,7 @@ return function(Config)
     path = sanitizePath(path)
     
     if love.filesystem.isDirectory(RootDir..path) then return error("Can't append data on a directory.") end
+    if readonly(path) then return error("Access denied.") end
     
     local asize = data:len()
     if Usage + fsize > Size then error("No enough space.") end
