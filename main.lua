@@ -6,6 +6,9 @@ Events:
 
 Special Events:
 - Trigger love:restart to soft restart the program.
+
+--==Contributers==--
+- Rami Sabbagh (RamiLego4Game)
 ]]
 
 --Requirements--
