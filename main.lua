@@ -9,32 +9,32 @@ Special Events:
 
 --==Contributers==--
 - Rami Sabbagh (RamiLego4Game)
+- Egor Dorichev (egordorichev)
 ]]
 
 --Requirements--
 local events = require("Engine.events")
 
 function love.run()
-  
   if love.math then
     love.math.setRandomSeed(os.time()) --Set random seed
   end
-  
+
   if love.load then love.load(arg) end --Call love.load
 
   -- We don't want the first frame's dt to include time taken by love.load.
   if love.timer then love.timer.step() end
 
   local dt = 0
-  
+
   --An outer loop for soft restarting.
   while true do
     local restart = false --The soft restart flag
-    
+
     events:registerEvent("love:restart",function()
       restart = true
     end)
-    
+
     -- Main loop time.
     while true do
       -- Process events.
@@ -48,7 +48,7 @@ function love.run()
                 flag = false
               end
             end
-            
+
             if flag then return a end --Quit.
           end
           events:triggerEvent("love:"..name,a,b,c,d,e,f) --Trigger the event.
@@ -63,28 +63,28 @@ function love.run()
 
       -- Call update and draw
       if love.update then love.update(dt) end -- Will pass 0 if love.timer is disabled
-      
+
       --Is it possible to render the screen ?
       if love.graphics and love.graphics.isActive() then
         events:triggerEvent("love:graphics") --Tell everyone that it's time to render the screen.
         love.graphics.present() --Flip the screen to the user
-        
+
         if love.timer then love.timer.sleep(0.001) end
       end
-      
+
       --Check if we should soft restart
       if restart then break end --Escape from the main loop
-      
+
     end
-    
+
     --Reset everything
     if love.graphics then
       love.graphics.reset() --Reset the graphics
     end
-    
+
     package.loaded = {bit = package.loaded["bit"]} --Reset the package system (should pass the bitop library)
     events = require("Engine.events") --Re-require the new events system.
-    
+
   end
 
 end
