@@ -194,6 +194,22 @@ return function(Config)
     end
   end
   
+  local function getSizeRecursive(path)
+    if not love.filesystem.exists(RootDir..path) then return 0 end
+    
+    if love.filesystem.isDirectory(RootDir..path) then
+      --Index a directory:
+      local total = 0
+      local files = love.filesystem.getDirectoryItems(RootDir..path)
+      for k,file in ipairs(files) do
+        total = total + getSizeRecursive(fs.combine(path,file))
+      end
+      return true
+    else
+      return love.filesystem.getSize(RootDir..path)
+    end
+  end
+  
   local function recurse_spec(results, path, spec)
     local segment = spec:match('([^/]*)'):gsub('/', '')
     local pattern = '^' .. segment:gsub("[%.%[%]%(%)%%%+%-%?%^%$]","%%%1"):gsub("%z","%%z"):gsub("%*","[^/]-") .. '$'
@@ -321,8 +337,9 @@ return function(Config)
     
     if not love.filesystem.exists(RootDir..from) then return error("From Path doesn't exists !") end
     if readonly(from) then return error("From Path: Access denied.") end
-    if not love.filesystem.exists(RootDir..to) then return error("To Path doesn't exists !") end
     if readonly(to) then return error("To Path: Access denied.") end
+    
+    createPath(to)
     
     copyRecursive(from,to)
     deleteRecursive(from)
@@ -337,10 +354,16 @@ return function(Config)
     to = sanitizePath(to)
     
     if not love.filesystem.exists(RootDir..from) then return error("From Path doesn't exists !") end
-    if not love.filesystem.exists(RootDir..to) then return error("To Path doesn't exists !") end
     if readonly(to) then return error("To Path: Access denied.") end
     
+    local csize = getSizeRecursive(from)
+    if csize > fs.getFreeSpace() then return error("No enough space !") end
+    
+    createPath(RootDir..to)
+    
     copyRecursive(from,to)
+    
+    Usage = Usage + csize
   end
   
   --Delete file/files (supports directories)
@@ -351,6 +374,9 @@ return function(Config)
     
     if not love.filesystem.exists(RootDir..path) then return error("Path doesn't exists !") end
     if readonly(path) then return error("Access denied.") end
+    
+    local dsize = getSizeRecursive(path)
+    Usage = Usage - dsize
     
     deleteRecursive(path)
   end
@@ -384,6 +410,8 @@ return function(Config)
       return ""
     end
   end
+  
+  Usage = getSizeRecursive("")
 
   return fs, {"FileSystem","fs"}, devkit
 end
