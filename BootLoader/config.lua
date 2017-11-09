@@ -7,7 +7,7 @@ conf.Version = {
   Tag = "DEV"
 }
 
-conf.VersionStr = "V"..conf.Version.Magor.."."...conf.Version.Minor.."."...conf.Version.Patch.." "..conf.Version.Tag
+conf.VersionStr = "V"..conf.Version.Magor.."."..conf.Version.Minor.."."..conf.Version.Patch.." "..conf.Version.Tag
 
 conf.Chips = {
   --The chips are loaded in this order:
