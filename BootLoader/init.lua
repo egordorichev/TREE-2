@@ -38,6 +38,9 @@ local DevKits, APIS = {}, {}
 --Config verification
 if not Config.Chips then error("Config.Chips is not defined !!!") end
 
+print("Loading Chips")
+print("---")
+
 --Chips Loading
 for id,Chip in ipairs(Config.Chips) do
   local CName = Chip.Chip
@@ -57,12 +60,14 @@ for id,Chip in ipairs(Config.Chips) do
     DevKits[CName] = DevKit
   end
 end
+print("---")
 
 --Chips Pre-Initialization
 print("Pre Initialize Chips")
 
 events:triggerEvent("Chip:PreInitialize",APIS,DevKits)
 
+print("---")
 --Chips Post-Initialization
 print("Post Initialize Chips")
 
