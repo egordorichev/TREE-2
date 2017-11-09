@@ -28,6 +28,7 @@ conf.Chips = {
   {
     Chip = "FileSystem",
     Size = 25*1024*1024, --25mb.
+    ROM = true, --Make the rom folder read-only
 
     RootDir = "/Storage/"
   }
