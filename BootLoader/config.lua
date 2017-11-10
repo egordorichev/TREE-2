@@ -34,7 +34,8 @@ conf.Chips = {
   },
 
   {
-    Chip = "Audio"
+    Chip = "Audio",
+    SampleRate = 22050
   }
 }
 

@@ -13,7 +13,7 @@ return function(config)
   local devkit = {} -- The audio devkit
   local api = {} -- The audio API
 
-  local sampleRate = 22050
+  local sampleRate = config.SampleRate
 
   -- Converts note to frequency
   local function noteToHZ(note)
@@ -100,7 +100,12 @@ return function(config)
 
   -- Updates audio
   events:registerEvent("love:update", function(delta)
+    local samples = math.floor(delta * sampleRate)
 
+    for i = 0, samples - 1 do
+      -- TODO: update audio
+      -- (requires ram)
+    end
   end)
 
   return api, {"Audio"}, devkit

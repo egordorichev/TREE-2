@@ -65,17 +65,18 @@ for id,Chip in ipairs(Config.Chips) do
     DevKits[CName] = DevKit
   end
 end
+
 print("---")
 
---Chips Pre-Initialization
+-- Chips Pre-Initialization
 print("Pre Initialize Chips")
-
 events:triggerEvent("Chip:PreInitialize",APIS,DevKits)
-
 print("---")
---Chips Post-Initialization
+
+-- Chips Post-Initialization
 print("Post Initialize Chips")
-
 events:triggerEvent("Chip:PostInitialize",APIS,DevKits)
-
 print("--==Bootloader End==--")
+
+-- Run the OS
+require("OS.boot")
