@@ -139,5 +139,94 @@ return function(config)
     end
   end
 
+  -- Draws a circle
+  function api.circ(ox, oy, r, c)
+  	ox = api.flr(ox)
+  	oy = api.flr(oy)
+  	r = api.flr(r)
+  	c = api.color(c)
+
+  	local x = r
+  	local y = 0
+  	local decisionOver2 = 1 - x
+
+  	while y <= x do
+  		api.pset(ox + x, oy + y, c)
+  		api.pset(ox + y, oy + x, c)
+  		api.pset(ox - x, oy + y, c)
+  		api.pset(ox - y, oy + x, c)
+  		api.pset(ox - x, oy - y, c)
+  		api.pset(ox - y, oy - x, c)
+  		api.pset(ox + x, oy - y, c)
+  		api.pset(ox + y, oy - x, c)
+
+  		y = y + 1
+
+  		if decisionOver2 < 0 then
+  			decisionOver2 = decisionOver2 + 2 * y + 1
+  		else
+  			x = x - 1
+  			decisionOver2 = decisionOver2 + 2 * (y - x) + 1
+  		end
+  	end
+  end
+
+  local function horizontalLine(x0, y, x1, c)
+  	for x = api.max(0, x0), api.min(WIDTH - 1, x1) do
+  		api.pset(x, y, c)
+  	end
+  end
+
+  local function plotPoints(cx, cy, x, y, c)
+  	horizontalLine(cx - x, cy + y, cx + x, c)
+
+  	if y ~= 0 then
+  		horizontalLine(cx - x, cy - y, cx + x, c)
+  	end
+  end
+
+  -- Fills a circle
+  function api.circfill(cx, cy, r, c)
+  	cx = api.flr(cx)
+  	cy = api.flr(cy)
+  	r = api.flr(r)
+  	c = api.color(c)
+
+  	local x = r
+  	local y = 0
+  	local err = 1 - r
+
+  	while y <= x do
+  		plotPoints(cx, cy, x, y, c)
+
+  		if err < 0 then
+  			err = err + 2 * y + 3
+  		else
+  			if x ~= y then
+  				plotPoints(cx, cy, y, x, c)
+  			end
+
+  			x = x - 1
+  			err = err + 2 * (y - x) + 3
+  		end
+
+  		y = y + 1
+  	end
+  end
+
+  -- Prints a string
+  function api.print(s, x, y, c)
+    if not s then
+      return
+    end
+
+    x = api.flr(x)
+    y = api.flr(y)
+    c = api.color(c)
+
+    -- TODO: print it
+    -- Requires trelear's font
+  end
+
   return api, {"Graphics"}, devkit
 end
