@@ -6,9 +6,24 @@
 
 --The Graphics CHIP
 
+local min,max,floor = math.min, math.max, math.floor
+local function mid(x, y, z)
+  if x > y then x, y = y, x end
+  
+  return max(x, min(y, z))
+end
+
 local events = require("Engine.events")
 
-return function(config)
+return function(Config)
+  
+  --The screen resolution.
+  local SWidth, SHeight = Config.Width, Config.Height
+  
+  --The screen image
+  local BufferImage = love.image.newImageData(SWidth,SHeight)
+  
+  
   events:registerEvent("love:graphics", function()
     love.graphics.clear()
   end)
@@ -16,47 +31,9 @@ return function(config)
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
 
-  -- Returns smallest numer
-  local function min(a, b)
-  	return a < b and a or b
-  end
-
-  -- Returns largerst number
-  local function max(a, b)
-  	return a > b and a or b
-  end
-
-  -- Returns mid number
-  local function mid(x, y, z)
-  	x, y, z = x or 0, y or 0, z or 0
-  	if x > y then
-  		x, y = y, x
-  	end
-
-  	return max(x, min(y, z))
-  end
-
-  -- Wrapper around math.floor
-  function api.flr(a)
-    return math.floor(a or 0)
-  end
-
-  -- Sets current color
-  function api.color(c)
-    if c then
-      -- TODO: support 0x10 for fill patterns
-      c = api.flr(c)
-      -- TODO: poke it to memory
-    end
-
-    -- TODO: return color from mem
-  end
-
   -- Clears the window
-  function api.cls(c)
-    c = api.color(c)
-
-    -- TODO: poke into the RAM
+  function api.clear()
+    
   end
 
   -- Sets one pixel to given color
