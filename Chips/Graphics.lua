@@ -16,6 +16,26 @@ return function(config)
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
 
+  -- Returns smallest numer
+  local function min(a, b)
+  	return a < b and a or b
+  end
+
+  -- Returns largerst number
+  local function max(a, b)
+  	return a > b and a or b
+  end
+
+  -- Returns mid number
+  local function mid(x, y, z)
+  	x, y, z = x or 0, y or 0, z or 0
+  	if x > y then
+  		x, y = y, x
+  	end
+
+  	return max(x, min(y, z))
+  end
+
   -- Wrapper around math.floor
   function api.flr(a)
     return math.floor(a or 0)
@@ -172,7 +192,7 @@ return function(config)
   end
 
   local function horizontalLine(x0, y, x1, c)
-  	for x = api.max(0, x0), api.min(WIDTH - 1, x1) do
+  	for x = max(0, x0), min(WIDTH - 1, x1) do
   		api.pset(x, y, c)
   	end
   end
@@ -212,6 +232,84 @@ return function(config)
 
   		y = y + 1
   	end
+  end
+
+  function api.tri(x1, y1, x2, y2, x3, y3, c)
+    x1 = api.flr(x1)
+    y1 = api.flr(y1)
+    x2 = api.flr(x2)
+    y2 = api.flr(y2)
+    x3 = api.flr(x3)
+    y3 = api.flr(y3)
+    c = api.color(c)
+
+    api.line(x1, y1, x2, y2, c)
+    api.line(x2, y2, x3, y3, c)
+    api.line(x1, y1, x3, y3, c)
+  end
+
+  function api.trifill(x1, y1, x2, y2, x3, y3, c)
+    x1 = api.flr(x1)
+    y1 = api.flr(y1)
+    x2 = api.flr(x2)
+    y2 = api.flr(y2)
+    x3 = api.flr(x3)
+    y3 = api.flr(y3)
+    c = api.color(c)
+
+    local hy = max(y1, max(y2, y3))
+    local hx
+
+    if y1 == hy then
+      hx = x1
+    elseif y2 == hy then
+      hx = x2
+    else
+      hx = x3
+    end
+
+    local ly = min(y1, min(y2, y3))
+    local lx
+
+    if y1 == ly then
+      lx = x1
+    elseif y2 == ly then
+      lx = x2
+    else
+      lx = x3
+    end
+
+    local my = mid(y1, y2, y3)
+    local mx
+
+    if y1 == my then
+      mx = x1
+    elseif y2 == my then
+      mx = x2
+    else
+      mx = x3
+    end
+
+    local k = my - ly
+
+    for i = 0, k do
+      local xa, xb,y
+      y = ly + i
+      xa = lx + (i / k) * (mx - lx)
+      xb = lx + (i / (hy - ly)) * (hx - lx)
+
+      api.line(xa, y, xb, y, c)
+    end
+
+    local k2 = hy - my
+
+    for i = 0, k2 do
+      local xa, xb ,y
+      y = my + i
+      xa = mx + (i / k2) * (hx - mx)
+      xb = lx + ((i + k) / (hy - ly)) * (hx - lx)
+      api.line(xa, y, xb, y, c)
+    end
   end
 
   -- Prints a string
