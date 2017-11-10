@@ -52,7 +52,7 @@ return function(config)
     -- TODO
   end
 
-  -- Inverts byte in RAM at given position
+  -- Inverts byte in RAM piat given position
   function ram.invert(addr)
     -- TODO
     -- Can be used in graphics

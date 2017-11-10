@@ -31,6 +31,10 @@ conf.Chips = {
     ROM = true, --Make the rom folder read-only
 
     RootDir = "/Storage/"
+  },
+
+  {
+    Chip = "Audio"
   }
 }
 
