@@ -17,11 +17,16 @@ conf.VersionStr = "V"..conf.Version.Magor.."."..conf.Version.Minor.."."..conf.Ve
 conf.Chips = {
   --The chips are loaded in this order:
   {
+    Chip = "RAM",
+    Size = 0
+  },
+  
+  {
     Chip = "Graphics",
     Title = "TREE-2 "..conf.VersionStr,
     Width = 480,
     Height = 320,
-    Scale = 2,
+    Scale = 1,
     PerfectScale = false
   },
 
