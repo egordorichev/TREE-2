@@ -18,7 +18,7 @@ conf.Chips = {
   --The chips are loaded in this order:
   {
     Chip = "RAM",
-    Size = 0
+    Size = 19200
   },
   
   {
@@ -26,6 +26,7 @@ conf.Chips = {
     Title = "TREE-2 "..conf.VersionStr,
     Width = 480,
     Height = 320,
+    RamAddress = 0,
     Scale = 1,
     PerfectScale = false
   },
