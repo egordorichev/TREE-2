@@ -234,6 +234,7 @@ return function(config)
   	end
   end
 
+  -- Draws a triangle
   function api.tri(x1, y1, x2, y2, x3, y3, c)
     x1 = api.flr(x1)
     y1 = api.flr(y1)
@@ -248,6 +249,7 @@ return function(config)
     api.line(x1, y1, x3, y3, c)
   end
 
+  -- Fills a triangle
   function api.trifill(x1, y1, x2, y2, x3, y3, c)
     x1 = api.flr(x1)
     y1 = api.flr(y1)
@@ -309,6 +311,35 @@ return function(config)
       xa = mx + (i / k2) * (hx - mx)
       xb = lx + ((i + k) / (hy - ly)) * (hx - lx)
       api.line(xa, y, xb, y, c)
+    end
+  end
+
+  -- Draws a polygon
+  function api.poly(...)
+    local points = { ... }
+
+    for i = 1, #points / 2 do
+      local x0 = api.fl(points[i])
+      local y0 = api.fl(points[i + 1])
+
+      local x1, y1
+
+      if i + 3 == #points then
+        x1, y1 = points[1], points[2]
+      else
+        x1, y1 = points[i + 2], points[i + 3]
+      end
+
+      api.line(x0, y0, x1, y1)
+    end
+  end
+
+  -- Fills a polygon
+  function api.polyfill(...)
+    local triangles = love.math.triangulate(...)
+
+    for i, t in ipairs(triangles) do
+      trifill(t[1], t[2], t[3], t[4], t[5], t[6])
     end
   end
 
