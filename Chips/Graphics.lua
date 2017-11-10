@@ -302,7 +302,7 @@ return function(config)
 
       api.line(xa, y, xb, y, c)
     end
-
+    
     local k2 = hy - my
 
     for i = 0, k2 do
