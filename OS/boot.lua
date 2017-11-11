@@ -6,7 +6,9 @@
 
 -- NutOS Boot File (First file loaded by the bootloader).
 
+-- Print the logo ;)
 print([[
+
        %#
           %
    (%######%%(
