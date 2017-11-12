@@ -2,10 +2,10 @@
 --==Contributers==--
 - Rami Sabbagh (RamiLego4Game)
 - Egor Dorichev (egordorichev)
+- Trevor Martin (trelemar)
 ]]
 
 --The Graphics CHIP
-local utf8 = require("utf8")
 local bit = require("bit")
 local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
 
@@ -486,30 +486,27 @@ return function(Config)
     if not s then
       return
     end
-    --s=s:gsub("%x","")
 
     x = floor(x)
     y = floor(y)
 
-    local line = 0
-    local cursor = 0
-    
+    local line, cursor = 0, 0
+    --Loop through each character
     for char = 1, #s do
       local code = string.byte(s, char)
-      print(code.." "..string.char(code))
+
       if code == 10 then line = line + 1 cursor = 0 else
-      for x1 = 0, 5 do
-        for y1 = 0, 7 do
-          if code < 32 or code > 255 then break end
-          --We only need to check red. green and blue are irrelevant for 1-bit
-          local r = FontImage:getPixel(x1 + ((code - 32) * 6), y1)
+        for x1 = 0, 5 do
+          for y1 = 0, 7 do
+            if code < 32 or code > 255 then break end
+            --We only need to check red. green and blue are irrelevant for 1-bit
+            local r = FontImage:getPixel(x1 + ((code - 32) * 6), y1)
 
-          if r == 0 then
-            pset(x + (cursor * 6) + x1, y + y1 + (line * 9), white or true)
+            if r == 0 then
+              pset(x + (cursor * 6) + x1, y + y1 + (line * 9), white or true)
+            end
           end
-
         end
-      end
       cursor = cursor + 1
       end
     end

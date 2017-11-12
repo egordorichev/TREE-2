@@ -30,7 +30,6 @@ for i,str in pairs(StringTests) do
 end
 ]]
 local logo=[[
-
        %#
           %
    (%######%%(
@@ -44,8 +43,8 @@ local logo=[[
      %&&%####.
        .&&.
 ]]
---G.print(logo,0,0)
-G.print("THIS\nIS\nA\nTest Print",0,0)
+G.print(logo,0,0)
+--G.print("THIS\nIS\nA\nTest Print",0,0)
 --G.print("HI\nEveryone",0,0)
 --G.print("WOIFIWIOOIWOIDHWOIDHWIOHIWODIWODH",420,0,true)
 
