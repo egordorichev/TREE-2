@@ -6,100 +6,245 @@
 
 --The Graphics CHIP
 
+local bit = require("bit")
+local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
+
+local min,max,floor = math.min, math.max, math.floor
+local function mid(x, y, z)
+  if x > y then x, y = y, x end
+
+  return max(x, min(y, z))
+end
+
 local events = require("Engine.events")
 
-return function(config)
+local onOS = love.system.getOS()
+local onMobile = (onOS == "Android" or onOS == "iOS")
+
+--Value, expected Type, Variable Name
+local function Verify(v,t,n)
+  if type(v) ~= t then
+    error(n.." should be a "..t.." provided: "..type(v),3)
+  end
+end
+
+return function(Config)
+
+  --The screen resolution.
+  local SWidth, SHeight = Config.Width, Config.Height
+  local SScale = Config.Scale
+  local PixelPerfect = Config.PixelPerfect
+
+  if floor(SWidth/8) ~= SWidth/8 then error("Screen width should be dividable by 8 !") end
+
+  --The RAM Variables
+  local VRAMSAddress = Config.RAMAddress
+  local VRAMLine = SWidth/8
+  local VRAMSize = SHeight*VRAMLine
+  local VRAMEAddress = VRAMSAddress + VRAMSize - 1
+
+  --The color palette
+  local Palette = {
+    {255, 255, 255, 255} --1: White
+  }
+  Palette[0] = {0, 0, 0, 255} --0: Black
+
+  --The screen image
+  love.graphics.setDefaultFilter("nearest")
+  local BufferImage = love.image.newImageData(SWidth,SHeight)
+  local _ShouldDraw = true --The draw flag if changes have been made.
+
+  local function setPixel(x,y,c)
+    if c then
+      BufferImage:setPixel(x,y,255,255,255,255)
+    else
+      BufferImage:setPixel(x,y,0,0,0,0)
+    end
+  end
+
+  events:registerEvent("RAM:poke",function(addr,value, oldvalue)
+
+    if addr < VRAMSAddress or addr > VRAMEAddress then return end
+    addr = addr - VRAMSAddress
+
+    local x = (addr % VRAMLine) * 8
+    local y = floor(addr / VRAMLine)
+
+    for px=x+7,x,-1 do
+      local b = band(value,1)
+      setPixel(px,y, (b == 1))
+      value = rshift(value,1)
+    end
+
+    _ShouldDraw = true -- Changes have been made.
+  end)
+
+  events:registerEvent("RAM:setBit",function(addr,bn,value,new,old)
+
+    if addr < VRAMSAddress or addr > VRAMEAddress then return end
+    addr = addr - VRAMSAddress
+
+    local x = (addr % VRAMLine) * 8
+    local y = floor(addr / VRAMLine)
+
+    setPixel(x+7-bn,y,value)
+
+    _ShouldDraw = true -- Changes have been made.
+  end)
+
+  --Window creation
+  local WWidth, WHeight = SWidth*SScale, SHeight*SScale
+  local WTitle = Config.Title
+
+  if not love.window.isOpen() then
+    love.window.setMode(WWidth,WHeight,{
+      resizable = true,
+      minwidth = SWidth,
+      minheight = SHeight
+    })
+  end
+
+  WWidth, WHeight = love.graphics.getDimensions() --Update the window size
+
+  love.window.setTitle(WTitle)
+  --love.window.setIcon(love.image.newImageData("icon.png"))
+
+  --Buffer Variables
+  local WX, WY, WSWidth, WSHeight, WScale = 0,0, 0,0, 1
+   events:registerEvent("love:resize",function(nw,nh)
+    WWidth, WHeight = nw, nh
+    if WWidth > WHeight then
+      WScale = WHeight/SHeight
+    else
+      WScale = WWidth/SWidth
+    end
+
+    if PixelPerfect then WScale = floor(WScale) end
+
+    WSWidth, WSHeight = SWidth*WScale, SHeight*WScale
+
+    WX = (WWidth - WSWidth)/2 + 0.5
+    WY = (WHeight - WSHeight)/2 + 0.5
+
+    if onMobile then WY = 0.5 end
+
+    _ShouldDraw = true
+  end)
+
+  --Calculate the buffer position variables for the first time
+  events:triggerEvent("love:resize", WWidth, WHeight)
+
+  --Draw the buffer
   events:registerEvent("love:graphics", function()
-    love.graphics.clear()
+    if not _ShouldDraw then return end
+
+    love.graphics.clear(0,0,0,255) --Clear the screen
+
+    --Draw the back color plate
+    love.graphics.setColor(Palette[0])
+    love.graphics.rectangle("fill",WX, WY, WSWidth,WSHeight)
+
+    --Draw the buffer
+    local Image = love.graphics.newImage(BufferImage)
+
+    love.graphics.setColor(Palette[1])
+    love.graphics.draw(Image,WX,WY, 0, WScale,WScale)
+  end)
+
+  --== Userfriendly functions ==--
+
+  local function VerifyPos(x,y,prefex)
+    local x, y, prefex = floor(x), floor(y), prefex or ""
+
+    if x < 0 or x >= SWidth then error(prefex.."X is out of range ("..x..") Should be [0,"..(SWidth-1).."]",3) end
+    if y < 0 or y >= SHeight then error(prefex.."Y is out of range ("..y..") Should be [0,"..(SHeight-1).."]",3) end
+
+    return x, y
+  end
+
+  local function onScreen(x,y)
+    if x < 0 or y < 0 or x >= SWidth or y >= SHeight then
+      return false
+    end
+    return true
+  end
+
+  local poke , peek, setBit, getBit, memget, memset, memcpy
+
+  events:registerEvent("Chip:PreInitialize", function(APIS, DevKits)
+    --Get the RAM functions
+    poke, peek = APIS.RAM.poke, APIS.RAM.peek
+    setBit, getBit = APIS.RAM.setBit, APIS.RAM.getBit
+    memget, memset, memcpy = APIS.RAM.memget, APIS.RAM.memset, APIS.RAM.memcpy
   end)
 
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
 
-  -- The font
-  local font = {
-    "011110001111000111110011110001111100111110011111001000100100000100100010010000010001001000100111100011110001111000111100011111011011100100010010001001000100100010010001011111100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111000001000011110011111000100010111111001111001111110011110001111000000000000011100100000000000000001010001010010011000001010011011010100000000000000111100010000000000000000000000001000000000",
-    "110001011000101100000110001011000001100000110000011000101100001101100010110000111011011100101100010110001011000101100010110000000110001100010110001011000101100010110001000001100111100011110001111100111100011111001111100111110010001001000001001000100100000100010010001001111000111100011110001111000111110110111001000100100010010001001000100100010111110010001100011000100011000001101100010110000011000000000110110011010001100000000000100110100000000000000011111010100100100100010001010001010010000101000001000010101000000000000000111000111100000000",
-    "110001011000101100000110001011000001100000110000011000101100001101100100110000110101011010101100010110001011000101100010110000000110001100010110001011000101100010110001000011001100010110001011000001100010110000011000001100000110001011000011011000101100001110110111001011000101100010110001011000101100000001100011000101100010110001011000101100010000110010011100111000000011000001101100010110000011000000000110110011010001100000000010000110100000000001000001010000000000110100010001010001010000001000100010011100010001001110101001000101101000010100",
-    "111111011111001100000110001011111001111100110111011111101100001101111100110000110001011001101100010111110011010101111100011110000110001100010110001011010100111100011110001100001111110111110011000001100010111110011111001101110111111011000011011111001100001101010110101011000101111100110101011111000111100001100011000101100010110101001111000111100011000010101100011000011110001111100111110011110011111000001110011110001111100000001000001100101110000010101001010000000000011101010001010001010000010000010010110010000011100000010011110000111100100010",
-    "110001011000101100000110001011000001100000110001011000101100001101100010110000110001011000101100010110000011001101101000000011000110001100010011010011010101100010001100011000001100010110001011000001100010110000011000001100010110001011000011011000101100001100010110011011000101100000110011011010000000110001100011000100110100110101011000100011000110000011001100011000110000000001100000110000011011001100011100110011000001100000000010000000000000000000010011111000000000100110010001010001010000100000001010111110000001001110101001000100001010010100",
-    "110001011111100111110111111011111101100000111111011000101101111001100010111110110001011000100111100110000001111101100110111111000110000111100001100001111001100010001100011111101100010111111001111101111110111111011000001111110110001011011110011000101111101100010110001001111001100000011111011001101111110001100001111000011000011110011000100011000111111001111001111110111111011111100000110111111001111100011000011110000111001001001000001000100000000000000001010000000000111011001010011011010000000000000010110010000000000000000000111001111100000000"
-  }
-
-  -- Returns smallest numer
-  local function min(a, b)
-  	return a < b and a or b
-  end
-
-  -- Returns largerst number
-  local function max(a, b)
-  	return a > b and a or b
-  end
-
-  -- Returns mid number
-  local function mid(x, y, z)
-  	x, y, z = x or 0, y or 0, z or 0
-  	if x > y then
-  		x, y = y, x
-  	end
-
-  	return max(x, min(y, z))
-  end
-
-  -- Wrapper around math.floor
-  function api.flr(a)
-    return math.floor(a or 0)
-  end
-
-  -- Sets current color
-  function api.color(c)
-    if c then
-      -- TODO: support 0x10 for fill patterns
-      c = api.flr(c)
-      -- TODO: poke it to memory
-    end
-
-    -- TODO: return color from mem
-  end
-
   -- Clears the window
-  function api.cls(c)
-    c = api.color(c)
-
-    -- TODO: poke into the RAM
+  function api.clear(white)
+    local Value = white and 255 or 0
+    for Addr = VRAMSAddress, VRAMEAddress do
+      poke(Addr,Value)
+    end
   end
 
-  -- Sets one pixel to given color
-  function api.pset(x, y, c)
-    x = api.flr(x)
-    y = api.flr(y)
-    c = api.color(c)
+  -- Sets one pixel to white or black
+  function api.pset(x, y, white)
+    Verify(x,"number","X Pos")
+    Verify(y,"number","Y Pos")
 
-    -- todo: call RAM.poke1
+    x, y = VerifyPos(x,y)
+
+    local addr = VRAMSAddress
+    addr = addr + y * VRAMLine
+    addr = addr + floor(x / 8)
+
+    local bn = 7 - (x % 8)
+
+    setBit(addr,bn,white)
+  end
+
+  local function pset(x,y,w)
+    if onScreen(x,y) then
+      api.pset(x,y,w)
+    end
   end
 
   -- Returns pixel value at given position
   function api.pget(x, y)
-    x = api.flr(x)
-    y = api.flr(y)
+    Verify(x,"number","X Pos")
+    Verify(y,"number","Y Pos")
 
-    return 0 -- TODO: peek value from the RAM
+    x, y = VerifyPos(x,y)
+
+    local addr = VRAMSAddres
+    addr = addr + y * VRAMLine
+    addr = addr + floor(x / 8)
+
+    local bn = 7 - (x % 8)
+
+    return getBit(addr,bn)
   end
 
   -- Draws a line
-  function api.line(x0, y0, x1, y1, c)
-    x0 = api.flr(x0)
-    x1 = api.flr(x1)
-    y0 = api.flr(y0)
-    y1 = api.flr(y1)
-    c = api.color(c)
+  function api.line(x0, y0, x1, y1, white)
+    Verify(x0,"number","X0")
+    Verify(y0,"number","Y0")
+    Verify(x1,"number","X1")
+    Verify(y1,"number","Y1")
+
+    x0, y0 = floor(x0), floor(y0)
+    x1, y1 = floor(x1), floor(y1)
+
+    local ddx, ddy = 1, 1
 
     if x0 > x1 then -- Make sure, that x0 is smaller
-      x0, x1 = x1, x0
+      ddx = -1
     end
 
     if y0 > y1 then -- Make sure, that y0 is smaller
-      y0, y1 = y1, y0
+      ddy = -1
     end
 
     local dx = x1 - x0
@@ -107,67 +252,48 @@ return function(config)
 
     if dx < 1 and dy < 1 then
       -- The line is just a point
-    	api.pset(x0, y1, c)
-    	return
+      pset(x0, y1, white)
+      return
     end
 
     if dx > dy then
-    	for x = x0, x1 do
-    		local y = y0 + dy * (x - x0) / dx
-    		api.pset(x, y, c)
-    	end
+     	for x = x0, x1, ddx do
+       	local y = y0 + dy * (x - x0) / dx
+    	  	pset(x, y, white)
+     	end
     else
-    	for y = y0, y1 do
-    		local x = x0 + dx * (y - y0) / dy
-    		api.pset(x, y, c)
-    	end
+     	for y = y0, y1, ddy do
+    	  	local x = x0 + dx * (y - y0) / dy
+     		pset(x, y, white)
+     	end
     end
   end
 
   -- Draws a rect
-  function api.rect(x0, y0, x1, y1, c)
-    x0 = api.flr(x0)
-    y0 = api.flr(y0)
-    x1 = api.flr(x1)
-    y1 = api.flr(y1)
-    c = api.color(c)
+  function api.rect(x,y, w,h, line, white)
+    Verify(x,"number","X")
+    Verify(y,"number","Y")
+    Verify(w,"number","Width")
+    Verify(h,"number","Height")
 
-    if x0 > x1 then
-    	x0, x1 = x1, x0
-    end
+    x,y = floor(x), floor(y)
+    w,h = floor(w), floor(h)
 
-    if y0 > y1 then
-    	y0, y1 = y1, y0
-    end
-
-    api.line(x0, y0, x1, y0, c)
-    api.line(x0, y1, x1, y1, c)
-    api.line(x0, y0, x0, y1, c)
-    api.line(x1, y0, x1, y1, c)
-  end
-
-  -- Fills a rect
-  function api.rectfill(x0, y0, x1, y1, c)
-    x0 = api.flr(x0)
-    y0 = api.flr(y0)
-    x1 = api.flr(x1)
-    y1 = api.flr(y1)
-    c = api.color(c)
-
-    if x0 > x1 then
-    	x0, x1 = x1, x0
-    end
-
-    if y0 > y1 then
-    	y0, y1 = y1, y0
-    end
-
-    for x = x0, x1 do
-    	for y = y0, y1 do
-    		api.pset(x, y, c)
-    	end
+    if line then
+      api.line(x,y, x+w-2,y, white)
+      api.line(x+w-1,y, x+w-1,y+h-2, white)
+      api.line(x,y+h-1,x+w-1,y+h-1, white)
+      api.line(x,y+1,x,y+h-1, white)
+    else
+      for px=x,x+w-1 do
+        for py=y,y+h-1 do
+          pset(px,py,white)
+        end
+      end
     end
   end
+
+  -----
 
   -- Draws a circle
   function api.circ(ox, oy, r, c)
@@ -364,7 +490,7 @@ return function(config)
     c = api.color(c)
 
     -- TODO: print it
-    -- Requires trelear's font
+    -- Requires trelemar's font
   end
 
   return api, {"Graphics"}, devkit

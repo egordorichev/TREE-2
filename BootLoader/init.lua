@@ -78,5 +78,8 @@ print("Post Initialize Chips")
 events:triggerEvent("Chip:PostInitialize",APIS,DevKits)
 print("--==Bootloader End==--")
 
+-- Run debug script
+love.filesystem.load("/BootLoader/debug.lua")(APIS,DevKits)
+
 -- Run the OS
-require("OS.boot")
+--require("OS.boot")

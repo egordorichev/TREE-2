@@ -31,7 +31,7 @@ function e:triggerEvent(name,...)
   if not reg[name] then return {} end --No functions are registered for this event.
   local responds = {}
   for id,func in ipairs(reg[name]) do
-    local respond = {func(name,...)} --Call each function, in the order they are registered with.
+    local respond = {func(...)} --Call each function, in the order they are registered with.
     table.insert(responds,respond) --Add the repond to the responds list.
   end
   return responds --Return the responds list.
