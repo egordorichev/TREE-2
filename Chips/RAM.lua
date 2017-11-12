@@ -15,6 +15,7 @@ local bit = require("bit")
 local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
 
 local floor = math.floor
+local strChar, strByte = string.char, string.byte
 
 local events = require("Engine.events")
 
@@ -132,17 +133,69 @@ return function(Config)
   
   -- Get RAM at given interval
   function api.memget(addr, length)
-    -- TODO
+    Verify(addr,"number","Address")
+    Verify(length,"number","Length")
+    
+    addr = VerifyAddress(addr,"Address")
+    length = floor(length)
+    
+    if addr+length >= ramSize then
+      length = ramSize - addr + 1
+    end
+    
+    local str, nid = {}, 1 --nid -> NextID
+    
+    for a=addr, addr+length-1 do
+      str[nid] = strChar(ram[a])
+    end
+    
+    return table.concat(str)
   end
 
   -- Sets RAM at given interval to given value
-  function api.memset(addr, value, length)
-    -- TODO
+  function api.memset(addr, value)
+    Verify(addr,"number","Address")
+    Verify(value,"string","Value")
+    
+    addr = VerifyAddress(addr,"Address")
+    
+    local length = value:len()
+    
+    if addr+length >= ramSize then
+      length = ramSize - addr + 1
+    end
+    
+    for i=1,length do
+      api.poke(addr+i-1, strByte(value,i))
+    end
   end
 
   -- Copies part of the RAM to another
-  function api.memcpy(to, from, length)
-    -- TODO
+  function api.memcpy(from, to, length)
+    Verify(from,"number","From Address")
+    Verify(to,"number","To Address")
+    Verify(length,"number","Length")
+    
+    from = VerifyAddress(from,"From Address")
+    to = VerifyAddress(to,"To Address")
+    
+    length = floor(length)
+    
+    if length < 0 then return error("Length can't be a negative number") end
+    
+    if length == 0 then return end
+    
+    if from+length >= ramSize then
+      length = ramSize - from + 1
+    end
+    
+    if to+length >= ramSize then
+      length = ramSize - to + 1
+    end
+    
+    for i=0,length-1 do
+      api.poke(to+i, ram[from+i])
+    end
   end
   
   return api, {"RAM"}, devkit
