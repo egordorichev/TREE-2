@@ -52,6 +52,7 @@ return function(Config)
   --The screen image
   love.graphics.setDefaultFilter("nearest")
   local BufferImage = love.image.newImageData(SWidth,SHeight)
+  local Image = love.graphics.newImage(BufferImage)
   local _ShouldDraw = true --The draw flag if changes have been made.
   
   local function setPixel(x,y,c)
@@ -61,6 +62,9 @@ return function(Config)
       BufferImage:setPixel(x,y,0,0,0,0)
     end
   end
+
+  --Font image data for printing
+  local FontImage = love.image.newImageData("assets/treetypemono.png")
   
   events:registerEvent("RAM:poke",function(addr,value, oldvalue)
     
@@ -145,7 +149,7 @@ return function(Config)
     love.graphics.rectangle("fill",WX, WY, WSWidth,WSHeight)
     
     --Draw the buffer
-    local Image = love.graphics.newImage(BufferImage)
+    Image:refresh()
     
     love.graphics.setColor(Palette[1])
     love.graphics.draw(Image,WX,WY, 0, WScale,WScale)
@@ -478,17 +482,33 @@ return function(Config)
   end
 
   -- Prints a string
-  function api.print(s, x, y, c)
+  function api.print(s, x, y, white)
     if not s then
       return
     end
 
-    x = api.flr(x)
-    y = api.flr(y)
-    c = api.color(c)
+    x = floor(x)
+    y = floor(y)
 
-    -- TODO: print it
-    -- Requires trelemar's font
+    local line = 0
+    
+    for char = 1, #s do
+      local code = string.byte(s, char)
+
+      for x1 = 0, 5 do
+        for y1 = 0, 7 do
+          if code <32 or code > 126 then break end
+
+          --We only need to check red. green and blue are irrelevant for 1-bit
+          local r = FontImage:getPixel(x1 + ((code - 32) * 6), y1)
+
+          if r == 0 then
+            pset(x + (char * 6) + x1, y + y1 + (line * 8), white or true)
+          end
+
+        end
+      end
+    end
   end
 
   return api, {"Graphics"}, devkit
