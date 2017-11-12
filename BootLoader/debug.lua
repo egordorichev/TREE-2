@@ -23,5 +23,6 @@ G.rect(10,150,100,100, false, true)
 
 G.line(0,0,479,319, true)
 G.line(0,319,479,0, true)
+G.rect(240,32,32,32,false,true)
 
 --G.pset(479,318,true)
