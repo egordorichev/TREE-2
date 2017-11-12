@@ -50,6 +50,7 @@ return function(Config)
   Palette[0] = {0, 0, 0, 255} --0: Black
   
   --The screen image
+  love.graphics.setDefaultFilter("nearest")
   local BufferImage = love.image.newImageData(SWidth,SHeight)
   local _ShouldDraw = true --The draw flag if changes have been made.
   
