@@ -21,6 +21,13 @@ local events = require("Engine.events")
 local onOS = love.system.getOS()
 local onMobile = (onOS == "Android" or onOS == "iOS")
 
+--Value, expected Type, Variable Name
+local function Verify(v,t,n)
+  if type(v) ~= t then
+    error(n.." should be a "..t.." provided: "..type(v),3)
+  end
+end
+
 return function(Config)
   
   --The screen resolution.
@@ -105,7 +112,6 @@ return function(Config)
   local WX, WY, WSWidth, WSHeight, WScale = 0,0, 0,0, 1
    events:registerEvent("love:resize",function(nw,nh)
     WWidth, WHeight = nw, nh
-    
     if WWidth > WHeight then
       WScale = WHeight/SHeight
     else
@@ -129,6 +135,8 @@ return function(Config)
   
   --Draw the buffer
   events:registerEvent("love:graphics", function()
+    if not _ShouldDraw then return end
+    
     love.graphics.clear(0,0,0,255) --Clear the screen
     
     --Draw the back color plate
@@ -142,24 +150,54 @@ return function(Config)
     love.graphics.draw(Image,WX,WY, 0, WScale,WScale)
   end)
   
-  -------
+  --== Userfriendly functions ==--
+  
+  local function VerifyPos(x,y,prefex)
+    local x, y, prefex = floor(x), floor(y), prefex or ""
+    
+    if x < 0 or x > SWidth-1 then error(prefex.."X is out of range ("..x..") Should be [0,"..(SWidth-1).."]",3) end
+    if y < 0 or y > SHeight-1 then error(prefex.."Y is out of range ("..y..") Should be [0,"..(SHeight-1).."]",3) end
+    
+    return x, y
+  end
+  
+  local poke , peek, setBit, getBit, memget, memset, memcpy
+  
+  events:registerEvent("Chip:PreInitialize", function(APIS, DevKits)
+    --Get the RAM functions
+    poke, peek = APIS.RAM.poke, APIS.RAM.peek
+    setBit, getBit = APIS.RAM.setBit, APIS.RAM.getBit
+    memget, memset, memcpy = APIS.RAM.memget, APIS.RAM.memset, APIS.RAM.memcpy
+  end)
   
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
 
   -- Clears the window
-  function api.clear()
+  function api.clear(white)
+    local Value = white and 255 or 0
+    for Addr = VRAMSAddress, VRAMEAddress do
+      poke(Addr,Value)
+    end
+  end
+
+  -- Sets one pixel to white or black
+  function api.pset(x, y, white)
+    Verify(x,"number","X Pos")
+    Verify(y,"number","Y Pos")
     
+    x, y = VerifyPos(x,y)
+    
+    local addr = VRAMSAddres
+    addr = addr + y * VRAMLine
+    addr = floor(x / 8)
+    
+    local bn = 7 - x % 8
+    
+    setBit(addr,bn,white)
   end
-
-  -- Sets one pixel to given color
-  function api.pset(x, y, c)
-    x = api.flr(x)
-    y = api.flr(y)
-    c = api.color(c)
-
-    -- todo: call RAM.poke1
-  end
+  
+  ------
 
   -- Returns pixel value at given position
   function api.pget(x, y)
