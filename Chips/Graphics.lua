@@ -6,6 +6,9 @@
 
 --The Graphics CHIP
 
+local bit = require("bit")
+local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
+
 local min,max,floor = math.min, math.max, math.floor
 local function mid(x, y, z)
   if x > y then x, y = y, x end
@@ -15,19 +18,132 @@ end
 
 local events = require("Engine.events")
 
+local onOS = love.system.getOS()
+local onMobile = (onOS == "Android" or onOS == "iOS")
+
 return function(Config)
   
   --The screen resolution.
   local SWidth, SHeight = Config.Width, Config.Height
+  local SScale = Config.Scale
+  local PixelPerfect = Config.PixelPerfect
+  
+  if floor(SWidth/8) ~= SWidth/8 then error("Screen width should be dividable by 8 !") end
+  
+  --The RAM Variables
+  local VRAMSAddress = Config.RAMAddress
+  local VRAMLine = SWidth/8
+  local VRAMSize = SHeight*VRAMLine
+  local VRAMEAddress = VRAMSAddress + VRAMSize - 1
+  
+  --The color palette
+  local Palette = {
+    {255, 255, 255, 255} --1: White
+  }
+  Palette[0] = {0, 0, 0, 255} --0: Black
   
   --The screen image
   local BufferImage = love.image.newImageData(SWidth,SHeight)
+  local _ShouldDraw = true --The draw flag if changes have been made.
   
+  local function setPixel(x,y,c)
+    if c then
+      BufferImage:setPixel(x,y,255,255,255,255)
+    else
+      BufferImage:setPixel(x,y,0,0,0,0)
+    end
+  end
   
-  events:registerEvent("love:graphics", function()
-    love.graphics.clear()
+  events:registerEvent("RAM:poke",function(addr,value, oldvalue)
+    
+    if addr < VRAMSAddress or addr > VRAMEAddress then return end
+    addr = addr - VRAMSAddress
+    
+    local x = (addr % VRAMLine) * 8
+    local y = floor(addr / VRAMLine)
+    
+    for px=x+7,x,-1 do
+      local b = band(value,1)
+      setPixel(px,y, (b == 1))
+      value = rshift(value,1)
+    end
+    
+    _ShouldDraw = true -- Changes have been made.
   end)
-
+  
+  events:registerEvent("RAM:setBit",function(addr,bn,value,new,old)
+    
+    if addr < VRAMSAddress or addr > VRAMEAddress then return end
+    addr = addr - VRAMSAddress
+    
+    local x = (addr % VRAMLine) * 8
+    local y = floor(addr / VRAMLine)
+    
+    setPixel(x+7-bn,y,value)
+    
+    _ShouldDraw = true -- Changes have been made.
+  end)
+  
+  --Window creation
+  local WWidth, WHeight = SWidth*SScale, SHeight*SScale
+  local WTitle = Config.Title
+  
+  if not love.window.isOpen() then
+    love.window.setMode(WWidth,WHeight,{
+      resizable = true,
+      minwidth = SWidth,
+      minheight = SHeight
+    })
+  end
+  
+  WWidth, WHeight = love.graphics.getDimensions() --Update the window size
+  
+  love.window.setTitle(WTitle)
+  --love.window.setIcon(love.image.newImageData("icon.png"))
+  
+  --Buffer Variables
+  local WX, WY, WSWidth, WSHeight, WScale = 0,0, 0,0, 1
+   events:registerEvent("love:resize",function(nw,nh)
+    WWidth, WHeight = nw, nh
+    
+    if WWidth > WHeight then
+      WScale = WHeight/SHeight
+    else
+      WScale = WWidth/SWidth
+    end
+    
+    if PixelPerfect then WScale = floor(WScale) end
+    
+    WSWidth, WSHeight = SWidth*WScale, SHeight*WScale
+    
+    WX = (WWidth - WSWidth)/2 + 0.5
+    WY = (WHeight - WSHeight)/2 + 0.5
+    
+    if onMobile then WY = 0.5 end
+    
+    _ShouldDraw = true
+  end)
+  
+  --Calculate the buffer position variables for the first time
+  events:triggerEvent("love:resize", WWidth, WHeight)
+  
+  --Draw the buffer
+  events:registerEvent("love:graphics", function()
+    love.graphics.clear(0,0,0,255) --Clear the screen
+    
+    --Draw the back color plate
+    love.graphics.setColor(Palette[0])
+    love.graphics.rectangle("fill",WX, WY, WSWidth,WSHeight)
+    
+    --Draw the buffer
+    local Image = love.graphics.newImage(BufferImage)
+    
+    love.graphics.setColor(Palette[1])
+    love.graphics.draw(Image,WX,WY, 0, WScale,WScale)
+  end)
+  
+  -------
+  
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
 
