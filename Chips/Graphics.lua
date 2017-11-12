@@ -155,10 +155,17 @@ return function(Config)
   local function VerifyPos(x,y,prefex)
     local x, y, prefex = floor(x), floor(y), prefex or ""
     
-    if x < 0 or x > SWidth-1 then error(prefex.."X is out of range ("..x..") Should be [0,"..(SWidth-1).."]",3) end
-    if y < 0 or y > SHeight-1 then error(prefex.."Y is out of range ("..y..") Should be [0,"..(SHeight-1).."]",3) end
+    if x < 0 or x >= SWidth then error(prefex.."X is out of range ("..x..") Should be [0,"..(SWidth-1).."]",3) end
+    if y < 0 or y >= SHeight then error(prefex.."Y is out of range ("..y..") Should be [0,"..(SHeight-1).."]",3) end
     
     return x, y
+  end
+  
+  local function onScreen(x,y)
+    if x < 0 or y < 0 or x >= SWidth or y >= SHeight then
+      return false
+    end
+    return true
   end
   
   local poke , peek, setBit, getBit, memget, memset, memcpy
@@ -188,32 +195,46 @@ return function(Config)
     
     x, y = VerifyPos(x,y)
     
-    local addr = VRAMSAddres
+    local addr = VRAMSAddress
     addr = addr + y * VRAMLine
-    addr = floor(x / 8)
+    addr = addr + floor(x / 8)
     
-    local bn = 7 - x % 8
+    local bn = 7 - (x % 8)
     
     setBit(addr,bn,white)
   end
   
-  ------
+  local function pset(x,y,w)
+    if onScreen(x,y) then
+      api.pset(x,y,w)
+    end
+  end
 
   -- Returns pixel value at given position
   function api.pget(x, y)
-    x = api.flr(x)
-    y = api.flr(y)
-
-    return 0 -- TODO: peek value from the RAM
+    Verify(x,"number","X Pos")
+    Verify(y,"number","Y Pos")
+    
+    x, y = VerifyPos(x,y)
+    
+    local addr = VRAMSAddres
+    addr = addr + y * VRAMLine
+    addr = addr + floor(x / 8)
+    
+    local bn = 7 - (x % 8)
+    
+    return getBit(addr,bn)
   end
 
   -- Draws a line
-  function api.line(x0, y0, x1, y1, c)
-    x0 = api.flr(x0)
-    x1 = api.flr(x1)
-    y0 = api.flr(y0)
-    y1 = api.flr(y1)
-    c = api.color(c)
+  function api.line(x0, y0, x1, y1, white)
+    Verify(x0,"number","X0")
+    Verify(y0,"number","Y0")
+    Verify(x1,"number","X1")
+    Verify(y1,"number","Y1")
+    
+    x0, y0 = floor(x0), floor(y0)
+    x1, y1 = floor(x1), floor(y1)
 
     if x0 > x1 then -- Make sure, that x0 is smaller
       x0, x1 = x1, x0
@@ -228,67 +249,48 @@ return function(Config)
 
     if dx < 1 and dy < 1 then
       -- The line is just a point
-    	api.pset(x0, y1, c)
-    	return
+      pset(x0, y1, white)
+      return
     end
 
     if dx > dy then
-    	for x = x0, x1 do
-    		local y = y0 + dy * (x - x0) / dx
-    		api.pset(x, y, c)
-    	end
+     	for x = x0, x1 do
+       	local y = y0 + dy * (x - x0) / dx
+    	  	pset(x, y, white)
+     	end
     else
-    	for y = y0, y1 do
-    		local x = x0 + dx * (y - y0) / dy
-    		api.pset(x, y, c)
-    	end
+     	for y = y0, y1 do
+    	  	local x = x0 + dx * (y - y0) / dy
+     		pset(x, y, white)
+     	end
     end
   end
 
   -- Draws a rect
-  function api.rect(x0, y0, x1, y1, c)
-    x0 = api.flr(x0)
-    y0 = api.flr(y0)
-    x1 = api.flr(x1)
-    y1 = api.flr(y1)
-    c = api.color(c)
-
-    if x0 > x1 then
-    	x0, x1 = x1, x0
-    end
-
-    if y0 > y1 then
-    	y0, y1 = y1, y0
-    end
-
-    api.line(x0, y0, x1, y0, c)
-    api.line(x0, y1, x1, y1, c)
-    api.line(x0, y0, x0, y1, c)
-    api.line(x1, y0, x1, y1, c)
-  end
-
-  -- Fills a rect
-  function api.rectfill(x0, y0, x1, y1, c)
-    x0 = api.flr(x0)
-    y0 = api.flr(y0)
-    x1 = api.flr(x1)
-    y1 = api.flr(y1)
-    c = api.color(c)
-
-    if x0 > x1 then
-    	x0, x1 = x1, x0
-    end
-
-    if y0 > y1 then
-    	y0, y1 = y1, y0
-    end
-
-    for x = x0, x1 do
-    	for y = y0, y1 do
-    		api.pset(x, y, c)
-    	end
+  function api.rect(x,y, w,h, line, white)
+    Verify(x,"number","X")
+    Verify(y,"number","Y")
+    Verify(w,"number","Width")
+    Verify(h,"number","Height")
+    
+    x,y = floor(x), floor(y)
+    w,h = floor(w), floor(h)
+    
+    if line then
+      api.line(x,y, x+w-2,y, white)
+      api.line(x+w-1,y, x+w-1,y+h-2, white)
+      api.line(x+w-1,y+h-1, x,y+h-1, white)
+      api.line(x,y+h-1, x,y-1, white)
+    else
+      for px=x,x+w-1 do
+        for py=y,y+h-1 do
+          pset(px,py,white)
+        end
+      end
     end
   end
+  
+  -----
 
   -- Draws a circle
   function api.circ(ox, oy, r, c)
