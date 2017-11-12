@@ -280,7 +280,7 @@ return function(Config)
       api.line(x,y, x+w-2,y, white)
       api.line(x+w-1,y, x+w-1,y+h-2, white)
       api.line(x+w-1,y+h-1, x,y+h-1, white)
-      api.line(x,y+h-1, x,y-1, white)
+      api.line(x,y+h-1, x,y+1, white)
     else
       for px=x,x+w-1 do
         for py=y,y+h-1 do
