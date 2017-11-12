@@ -17,12 +17,17 @@ end
 local G = APIS.Graphics
 
 G.clear()
-
 G.rect(10,10,100,100, true, true)
 G.rect(10,150,100,100, false, true)
 
 G.line(0,0,479,319, true)
 G.line(0,319,479,0, true)
 G.rect(240,32,32,32,false,true)
+
+local StringTests={"Hello\nWorld!","TREE-2","FANTASY CONSOLE"}
+for i,str in pairs(StringTests) do
+  G.print(str, math.random(0, 480), math.random(0, 100),true)
+end
+G.print("WOIFIWIOOIWOIDHWOIDHWIOHIWODIWODH",420,0,true)
 
 --G.pset(479,318,true)
