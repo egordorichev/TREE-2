@@ -26,9 +26,9 @@ conf.Chips = {
     Title = "TREE-2 "..conf.VersionStr,
     Width = 480,
     Height = 320,
-    RamAddress = 0,
+    RAMAddress = 0,
     Scale = 1,
-    PerfectScale = false
+    PixelPerfect = false
   },
 
   {
