@@ -5,14 +5,14 @@
 ]]
 
 --The Graphics CHIP
-
+local utf8 = require("utf8")
 local bit = require("bit")
 local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
 
 local min,max,floor = math.min, math.max, math.floor
 local function mid(x, y, z)
   if x > y then x, y = y, x end
-
+  
   return max(x, min(y, z))
 end
 
@@ -29,32 +29,32 @@ local function Verify(v,t,n)
 end
 
 return function(Config)
-
+  
   --The screen resolution.
   local SWidth, SHeight = Config.Width, Config.Height
   local SScale = Config.Scale
   local PixelPerfect = Config.PixelPerfect
-
+  
   if floor(SWidth/8) ~= SWidth/8 then error("Screen width should be dividable by 8 !") end
-
+  
   --The RAM Variables
   local VRAMSAddress = Config.RAMAddress
   local VRAMLine = SWidth/8
   local VRAMSize = SHeight*VRAMLine
   local VRAMEAddress = VRAMSAddress + VRAMSize - 1
-
+  
   --The color palette
   local Palette = {
     {255, 255, 255, 255} --1: White
   }
   Palette[0] = {0, 0, 0, 255} --0: Black
-
+  
   --The screen image
   love.graphics.setDefaultFilter("nearest")
   local BufferImage = love.image.newImageData(SWidth,SHeight)
   local Image = love.graphics.newImage(BufferImage)
   local _ShouldDraw = true --The draw flag if changes have been made.
-
+  
   local function setPixel(x,y,c)
     if c then
       BufferImage:setPixel(x,y,255,255,255,255)
@@ -65,41 +65,41 @@ return function(Config)
 
   --Font image data for printing
   local FontImage = love.image.newImageData("assets/treetypemono.png")
-
+  
   events:registerEvent("RAM:poke",function(addr,value, oldvalue)
-
+    
     if addr < VRAMSAddress or addr > VRAMEAddress then return end
     addr = addr - VRAMSAddress
-
+    
     local x = (addr % VRAMLine) * 8
     local y = floor(addr / VRAMLine)
-
+    
     for px=x+7,x,-1 do
       local b = band(value,1)
       setPixel(px,y, (b == 1))
       value = rshift(value,1)
     end
-
+    
     _ShouldDraw = true -- Changes have been made.
   end)
-
+  
   events:registerEvent("RAM:setBit",function(addr,bn,value,new,old)
-
+    
     if addr < VRAMSAddress or addr > VRAMEAddress then return end
     addr = addr - VRAMSAddress
-
+    
     local x = (addr % VRAMLine) * 8
     local y = floor(addr / VRAMLine)
-
+    
     setPixel(x+7-bn,y,value)
-
+    
     _ShouldDraw = true -- Changes have been made.
   end)
-
+  
   --Window creation
   local WWidth, WHeight = SWidth*SScale, SHeight*SScale
   local WTitle = Config.Title
-
+  
   if not love.window.isOpen() then
     love.window.setMode(WWidth,WHeight,{
       resizable = true,
@@ -107,12 +107,12 @@ return function(Config)
       minheight = SHeight
     })
   end
-
+  
   WWidth, WHeight = love.graphics.getDimensions() --Update the window size
-
+  
   love.window.setTitle(WTitle)
   --love.window.setIcon(love.image.newImageData("icon.png"))
-
+  
   --Buffer Variables
   local WX, WY, WSWidth, WSHeight, WScale = 0,0, 0,0, 1
    events:registerEvent("love:resize",function(nw,nh)
@@ -122,66 +122,66 @@ return function(Config)
     else
       WScale = WWidth/SWidth
     end
-
+    
     if PixelPerfect then WScale = floor(WScale) end
-
+    
     WSWidth, WSHeight = SWidth*WScale, SHeight*WScale
-
+    
     WX = (WWidth - WSWidth)/2 + 0.5
     WY = (WHeight - WSHeight)/2 + 0.5
-
+    
     if onMobile then WY = 0.5 end
-
+    
     _ShouldDraw = true
   end)
-
+  
   --Calculate the buffer position variables for the first time
   events:triggerEvent("love:resize", WWidth, WHeight)
-
+  
   --Draw the buffer
   events:registerEvent("love:graphics", function()
     if not _ShouldDraw then return end
-
+    
     love.graphics.clear(0,0,0,255) --Clear the screen
-
+    
     --Draw the back color plate
     love.graphics.setColor(Palette[0])
     love.graphics.rectangle("fill",WX, WY, WSWidth,WSHeight)
-
+    
     --Draw the buffer
     Image:refresh()
-
+    
     love.graphics.setColor(Palette[1])
     love.graphics.draw(Image,WX,WY, 0, WScale,WScale)
   end)
-
+  
   --== Userfriendly functions ==--
-
+  
   local function VerifyPos(x,y,prefex)
     local x, y, prefex = floor(x), floor(y), prefex or ""
-
+    
     if x < 0 or x >= SWidth then error(prefex.."X is out of range ("..x..") Should be [0,"..(SWidth-1).."]",3) end
     if y < 0 or y >= SHeight then error(prefex.."Y is out of range ("..y..") Should be [0,"..(SHeight-1).."]",3) end
-
+    
     return x, y
   end
-
+  
   local function onScreen(x,y)
     if x < 0 or y < 0 or x >= SWidth or y >= SHeight then
       return false
     end
     return true
   end
-
+  
   local poke , peek, setBit, getBit, memget, memset, memcpy
-
+  
   events:registerEvent("Chip:PreInitialize", function(APIS, DevKits)
     --Get the RAM functions
     poke, peek = APIS.RAM.poke, APIS.RAM.peek
     setBit, getBit = APIS.RAM.setBit, APIS.RAM.getBit
     memget, memset, memcpy = APIS.RAM.memget, APIS.RAM.memset, APIS.RAM.memcpy
   end)
-
+  
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
 
@@ -197,18 +197,18 @@ return function(Config)
   function api.pset(x, y, white)
     Verify(x,"number","X Pos")
     Verify(y,"number","Y Pos")
-
+    
     x, y = VerifyPos(x,y)
-
+    
     local addr = VRAMSAddress
     addr = addr + y * VRAMLine
     addr = addr + floor(x / 8)
-
+    
     local bn = 7 - (x % 8)
-
+    
     setBit(addr,bn,white)
   end
-
+  
   local function pset(x,y,w)
     if onScreen(x,y) then
       api.pset(x,y,w)
@@ -219,15 +219,15 @@ return function(Config)
   function api.pget(x, y)
     Verify(x,"number","X Pos")
     Verify(y,"number","Y Pos")
-
+    
     x, y = VerifyPos(x,y)
-
+    
     local addr = VRAMSAddres
     addr = addr + y * VRAMLine
     addr = addr + floor(x / 8)
-
+    
     local bn = 7 - (x % 8)
-
+    
     return getBit(addr,bn)
   end
 
@@ -237,18 +237,16 @@ return function(Config)
     Verify(y0,"number","Y0")
     Verify(x1,"number","X1")
     Verify(y1,"number","Y1")
-
+    
     x0, y0 = floor(x0), floor(y0)
     x1, y1 = floor(x1), floor(y1)
 
-    local ddx, ddy = 1, 1
-
     if x0 > x1 then -- Make sure, that x0 is smaller
-      ddx = -1
+      x0, x1 = x1, x0
     end
 
     if y0 > y1 then -- Make sure, that y0 is smaller
-      ddy = -1
+      y0, y1 = y1, y0
     end
 
     local dx = x1 - x0
@@ -261,12 +259,12 @@ return function(Config)
     end
 
     if dx > dy then
-     	for x = x0, x1, ddx do
+     	for x = x0, x1 do
        	local y = y0 + dy * (x - x0) / dx
     	  	pset(x, y, white)
      	end
     else
-     	for y = y0, y1, ddy do
+     	for y = y0, y1 do
     	  	local x = x0 + dx * (y - y0) / dy
      		pset(x, y, white)
      	end
@@ -279,15 +277,15 @@ return function(Config)
     Verify(y,"number","Y")
     Verify(w,"number","Width")
     Verify(h,"number","Height")
-
+    
     x,y = floor(x), floor(y)
     w,h = floor(w), floor(h)
-
+    
     if line then
       api.line(x,y, x+w-2,y, white)
       api.line(x+w-1,y, x+w-1,y+h-2, white)
-      api.line(x,y+h-1,x+w-1,y+h-1, white)
-      api.line(x,y+1,x,y+h-1, white)
+      api.line(x+w-1,y+h-1, x,y+h-1, white)
+      api.line(x,y+h-1, x,y+1, white)
     else
       for px=x,x+w-1 do
         for py=y,y+h-1 do
@@ -296,7 +294,7 @@ return function(Config)
       end
     end
   end
-
+  
   -----
 
   -- Draws a circle
@@ -442,7 +440,7 @@ return function(Config)
 
       api.line(xa, y, xb, y, c)
     end
-
+    
     local k2 = hy - my
 
     for i = 0, k2 do
@@ -488,28 +486,32 @@ return function(Config)
     if not s then
       return
     end
+    --s=s:gsub("%x","")
 
     x = floor(x)
     y = floor(y)
 
     local line = 0
-
+    local cursor = 0
+    
     for char = 1, #s do
       local code = string.byte(s, char)
-
+      print(code.." "..string.char(code))
+      if code == 10 then line = line + 1 cursor = 0 end
       for x1 = 0, 5 do
         for y1 = 0, 7 do
-          if code <32 or code > 126 then break end
-
+          if code < 32 or code > 255 then break end
           --We only need to check red. green and blue are irrelevant for 1-bit
           local r = FontImage:getPixel(x1 + ((code - 32) * 6), y1)
 
           if r == 0 then
-            pset(x + (char * 6) + x1, y + y1 + (line * 8), white or true)
+            pset(x + (cursor * 6) + x1, y + y1 + (line * 9), white or true)
           end
 
         end
       end
+      cursor = cursor + 1
+
     end
   end
 

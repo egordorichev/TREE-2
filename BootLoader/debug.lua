@@ -15,8 +15,8 @@ for Y=0,319 do
 end
 
 local G = APIS.Graphics
-
 G.clear()
+--[[
 G.rect(10,10,100,100, true, true)
 G.rect(10,150,100,100, false, true)
 
@@ -28,6 +28,25 @@ local StringTests={"Hello\nWorld!","TREE-2","FANTASY CONSOLE"}
 for i,str in pairs(StringTests) do
   G.print(str, math.random(0, 480), math.random(0, 100),true)
 end
-G.print("WOIFIWIOOIWOIDHWOIDHWIOHIWODIWODH",420,0,true)
+]]
+local logo=[[
+
+       %#
+          %
+   (%######%%(
+&&%%#(###((##(((((,
+@&&%&&%%#(#(#(((/(#
+ (&@@@&%&%&&&&%%%%&
+ .%&&&%#((((((%#/(
+  #%%%##(//**,,,*
+  ,%%%##((//**,*,
+   /%%%%#((////
+     %&&%####.
+       .&&.
+]]
+--G.print(logo,0,0)
+G.print("THIS\nIS\nA\nTest Print",0,0)
+--G.print("HI\nEveryone",0,0)
+--G.print("WOIFIWIOOIWOIDHWOIDHWIOHIWODIWODH",420,0,true)
 
 --G.pset(479,318,true)
