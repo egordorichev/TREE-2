@@ -447,7 +447,7 @@ return function(Config)
     c = api.color(c)
 
     -- TODO: print it
-    -- Requires trelear's font
+    -- Requires trelemar's font
   end
 
   return api, {"Graphics"}, devkit
