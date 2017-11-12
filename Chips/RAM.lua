@@ -11,6 +11,13 @@
 
 --The RAM CHIP
 
+local bit = require("bit")
+local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
+
+local floor = math.floor
+
+local events = require("Engine.events")
+
 local function tohex(v) return string.format("0x%X",v) end
 
 --Value, expected Type, Variable Name
@@ -53,6 +60,16 @@ return function(Config)
     
     return value
   end
+  
+  local function VerifyBitNum(bn)
+    bn = floor(bn)
+    
+    if bn < 0 or bn > 7 then
+      error("Bit Number is out of range ("..bn.."), must be [0,7]",3)
+    end
+    
+    return bn
+  end
 
   -- Returns byte from RAM at given position
   function api.peek(addr)
@@ -70,24 +87,52 @@ return function(Config)
     
     addr = VerifyAddress(addr,"Address")
     value = VerifyValue(value)
-    events:triggerEvent("RAM:poke",addr,value,ram[addr])
+    
+    if value == ram[addr] then return end --The same value, nothing to change.
+     events:triggerEvent("RAM:poke",addr,value,ram[addr])
     
     ram[addr] = value
   end
 
   -- Returns one bit from RAM at given position
   function api.getBit(addr,bn)
-    -- TODO
+    Verify(addr,"number","Address")
+    Verify(bn,"number","Bit Number")
+    
+    addr = VerifyAddress(addr,"Address")
+    bn = VerifyBitNum(bn)
+    
+    return (band( ram[addr], lshift(1,bn) ) > 0)
   end
 
   -- Sets one bit in RAM at given position
   function api.setBit(addr,bn,value)
-    -- TODO
+    Verify(addr,"number","Address")
+    Verify(bn,"number","Bit Number")
+    
+    addr = VerifyAddress(addr,"Address")
+    bn = VerifyBitNum(bn)
+    
+    local b = lshift(1,bn)
+    if not value then b = bxor(255,b) end
+    
+    local new --The new value
+    if value then
+      new = bor(ram[addr], b)
+    else
+      new = band(ram[addr], b)
+    end
+    
+    if new == ram[addr] then return end --The same value, nothing to change.
+    
+    events:triggerEvent("RAM:setBit",addr,bn,value, new, ram[addr])
+    
+    ram[addr] = new
   end
   
   -- Get RAM at given interval
   function api.memget(addr, length)
-  
+    -- TODO
   end
 
   -- Sets RAM at given interval to given value
