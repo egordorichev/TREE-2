@@ -497,7 +497,7 @@ return function(Config)
     for char = 1, #s do
       local code = string.byte(s, char)
       print(code.." "..string.char(code))
-      if code == 10 then line = line + 1 cursor = 0 end
+      if code == 10 then line = line + 1 cursor = 0 else
       for x1 = 0, 5 do
         for y1 = 0, 7 do
           if code < 32 or code > 255 then break end
@@ -511,7 +511,7 @@ return function(Config)
         end
       end
       cursor = cursor + 1
-
+      end
     end
   end
 
