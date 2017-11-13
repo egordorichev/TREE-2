@@ -30,6 +30,12 @@ end
 
 return function(Config)
   
+  --The Machine
+  local Machine
+  events:registerEvent("Chip:PreInitialize",function(APIS,DevKits,M)
+    Machine = M
+  end)
+  
   --The screen resolution.
   local SWidth, SHeight = Config.Width, Config.Height
   local SScale = Config.Scale
@@ -62,9 +68,6 @@ return function(Config)
       BufferImage:setPixel(x,y,0,0,0,0)
     end
   end
-
-  --Font image data for printing
-  local FontImage = love.image.newImageData("assets/treetypemono.png")
   
   events:registerEvent("RAM:poke",function(addr,value, oldvalue)
     
@@ -138,6 +141,8 @@ return function(Config)
   --Calculate the buffer position variables for the first time
   events:triggerEvent("love:resize", WWidth, WHeight)
   
+  local FlipBuffer = false --Is API.flip called
+  
   --Draw the buffer
   events:registerEvent("love:graphics", function()
     if not _ShouldDraw then return end
@@ -153,6 +158,13 @@ return function(Config)
     
     love.graphics.setColor(Palette[1])
     love.graphics.draw(Image,WX,WY, 0, WScale,WScale)
+    
+    love.graphics.present() --Flip the screen to the user
+    
+    if FlipBuffer then
+      FlipBuffer = false
+      Machine.Resume()
+    end
   end)
   
   --== Userfriendly functions ==--
@@ -182,8 +194,20 @@ return function(Config)
     memget, memset, memcpy = APIS.RAM.memget, APIS.RAM.memset, APIS.RAM.memcpy
   end)
   
+  
+  --Font image data for printing
+  local FontImage = love.image.newImageData("assets/treetypemono.png")
+  
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
+  
+  -- Flip the screen
+  function api.flip()
+    _ShouldDraw = true
+    FlipBuffer = true
+    
+    Machine.Yield()
+  end
 
   -- Clears the window
   function api.clear(white)
