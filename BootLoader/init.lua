@@ -68,18 +68,81 @@ end
 
 print("---")
 
+local fs = APIS.fs
+
+-- NutOS Installations
+local function deepCopy(from,to)
+  local files = love.filesystem.getDirectoryItems(from)
+  for _, file in ipairs(files) do
+    if love.filesystem.isFile(from..file) then
+      fs.write(to..file, love.filesystem.read(from..file))
+    else
+      deepCopy(from..file.."/", to..file.."/")
+    end
+  end
+end
+
+print("Installing NutOS...")
+
+deepCopy("/OS/","/rom/")
+
+-- The machine state
+local Machine = {}
+
+Machine.APIS    = APIS
+Machine.DevKits = DevKits
+Machine.Config  = Config
+
+Machine.Code = fs.read("/rom/boot.lua")
+
+function Machine.ChunkLoader()
+  local data = Machine.Code
+  return function()
+    local d = data
+    data = nil
+    return d
+  end
+end
+
+Machine.Chunk = load(Machine.ChunkLoader(), "/rom/boot.lua")
+Machine.Sandbox = require("Engine.sandbox")(Machine, APIS)
+Machine.CO = coroutine.create(Machine.Chunk)
+
+function Machine.Yield()
+  Machine.YieldExpected = true
+  return coroutine.yield()
+end
+
+function Machine.Resume(...)
+  if coroutine.status(Machine.CO) == "dead" then return end
+  
+  local args = {coroutine.resume(Machine.CO,...)}
+  
+  if not args[1] then error(args[2]) end
+  
+  if coroutine.status(Machine.CO) == "dead" then
+    print("--OS Finished !!--")
+    return
+  end
+  
+  if not Machine.YieldExpected then error("Unexpected Yield") end
+  
+  Machine.YieldExpected = false
+end
+
 -- Chips Pre-Initialization
 print("Pre Initialize Chips")
-events:triggerEvent("Chip:PreInitialize",APIS,DevKits)
+events:triggerEvent("Chip:PreInitialize",APIS,DevKits,Machine)
 print("---")
 
 -- Chips Post-Initialization
 print("Post Initialize Chips")
-events:triggerEvent("Chip:PostInitialize",APIS,DevKits)
+events:triggerEvent("Chip:PostInitialize",APIS,DevKits,Machine)
 print("--==Bootloader End==--")
 
 -- Run debug script
 love.filesystem.load("/BootLoader/debug.lua")(APIS,DevKits)
 
--- Run the OS
---require("OS.boot")
+Machine.Resume() --Start the operating system
+
+return Machine
