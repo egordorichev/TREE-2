@@ -69,8 +69,7 @@ function love.run()
       --Is it possible to render the screen ?
       if love.graphics and love.graphics.isActive() then
         events:triggerEvent("love:graphics") --Tell everyone that it's time to render the screen.
-        love.graphics.present() --Flip the screen to the user
-
+        
         if love.timer then love.timer.sleep(0.001) end
       end
 
