@@ -202,9 +202,9 @@ return function(Config)
       local total = 0
       local files = love.filesystem.getDirectoryItems(RootDir..path)
       for k,file in ipairs(files) do
-        total = total + getSizeRecursive(fs.combine(path,file))
+        total = total + getSizeRecursive(path.."/"..file)
       end
-      return true
+      return total
     else
       return love.filesystem.getSize(RootDir..path)
     end
