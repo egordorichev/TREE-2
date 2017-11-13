@@ -7,7 +7,7 @@
 -- NutOS Boot File (First file loaded by the bootloader).
 
 -- Print the logo ;)
-print([[
+--[=[print([[
 
        %#
           %
@@ -47,4 +47,21 @@ events:registerEvent("love:graphics", function()
       a.draw(a)
     end
   end
-end)
+end)]=]
+
+Graphics.clear(true)
+
+local P = tonumber(10101010,2)
+
+local VRAMLine = 480/8
+local A=0
+
+for Y=0,319 do
+  for i=1,VRAMLine do
+    RAM.poke(A,P)
+    A = A + 1
+  end
+  Graphics.flip()
+end
+
+--Graphics.flip()
