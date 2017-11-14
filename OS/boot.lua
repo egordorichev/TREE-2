@@ -53,6 +53,39 @@ local r = 0
 local inc = true
 local t = 64
 local speed = 1
+local pid = 0
+
+local patterns = {
+  {
+    11111000,
+    01110100,
+    00100010,
+    01000111,
+    10001111,
+    00010111,
+    00100010,
+    01110001
+  }
+  ,
+  {
+    00100000,
+    01010000,
+    10001000,
+    10001000,
+    10001000,
+    10001000,
+    00000101,
+    00000010
+  }
+}
+
+for id,pat in ipairs(patterns) do
+  for bid, byte in ipairs(pat) do
+    pat[bid] = tonumber(byte,2)
+  end
+end
+
+--Graphics.pattern(patterns[1],1)
 
 while true do
 
@@ -63,7 +96,10 @@ while true do
   end
   
   if inc and r >= t then inc = false
-  elseif r <= 0 and not inc then inc = true
+  elseif r <= 0 and not inc then
+    inc = true
+    pid = (pid + 1) % (#patterns + 1)
+    Graphics.pattern(patterns[pid],1)
   end
   
   Graphics.clear(true)
