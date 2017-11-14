@@ -140,6 +140,13 @@ while true do
   
   Graphics.circle(240,160,r)
   Graphics.circle(240,160,r+8,true)
+  Graphics.circle(240,160,r+7,true)
+  
+  Graphics.triangle(5,5,30,5,5,30,true)
+  --Graphics.triangle(8,8,27,8,8,27,false,true)
+  
+  --Graphics.rect(240-r/2,160-r/2,r,r)
+  --Graphics.rect(240-r/2-2,160-r/2-2,r+4,r+4,true)
   
   Graphics.flip()
 end
