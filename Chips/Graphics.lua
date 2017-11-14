@@ -9,7 +9,7 @@
 local bit = require("bit")
 local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
 
-local min,max,floor,abs = math.min, math.max, math.floor, math.abs
+local min,max,floor,ceil,abs = math.min, math.max, math.floor, math.ceil, math.abs
 local function mid(x, y, z)
   if x > y then x, y = y, x end
   
@@ -201,6 +201,9 @@ return function(Config)
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
   
+  local pattern --The fill pattern
+  local patternWidth, patternHeight = 0,0
+  
   -- Flip the screen
   function api.flip()
     _ShouldDraw = true
@@ -216,6 +219,32 @@ return function(Config)
       poke(Addr,Value)
     end
   end
+  
+  --Set the pattern
+  function api.pattern(pat,bpl)
+    if not pat then pattern = nil end
+    Verify(pat,"table","pattern")
+    Verify(bpl,"number","Bytes Per Line")
+    
+    local height = ceil(#pat / bpl)
+    local width = bpl*8
+    
+    pattern = {}
+    
+    for y=0,height-1 do
+      pattern[y] = {}
+      for b=1,bpl do
+        local v = pat[y*bpl + b] or error("b: "..b.." y: "..y)
+        local tb = 128 --0b10000000
+        for i=0,7 do
+          table.insert(pattern[y],band(v,tb) == 0)
+          tb = rshift(tb,1)
+        end
+      end
+    end
+    
+    patternWidth, patternHeight = width, height
+  end
 
   -- Sets one pixel to white or black
   function api.pset(x, y, white)
@@ -223,6 +252,12 @@ return function(Config)
     Verify(y,"number","Y Pos")
     
     x, y = VerifyPos(x,y)
+    
+    if pattern then
+      local px = x % patternWidth  +1
+      local py = y % patternHeight
+      if pattern[py][px] then return end
+    end
     
     local addr = VRAMSAddress
     addr = addr + y * VRAMLine
