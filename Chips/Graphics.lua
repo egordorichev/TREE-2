@@ -428,114 +428,90 @@ return function(Config)
     end
   end
   
-  -----
-  
   -- Draws a triangle
-  function api.tri(x1, y1, x2, y2, x3, y3, c)
-    x1 = api.flr(x1)
-    y1 = api.flr(y1)
-    x2 = api.flr(x2)
-    y2 = api.flr(y2)
-    x3 = api.flr(x3)
-    y3 = api.flr(y3)
-    c = api.color(c)
-
-    api.line(x1, y1, x2, y2, c)
-    api.line(x2, y2, x3, y3, c)
-    api.line(x1, y1, x3, y3, c)
-  end
-
-  -- Fills a triangle
-  function api.trifill(x1, y1, x2, y2, x3, y3, c)
-    x1 = api.flr(x1)
-    y1 = api.flr(y1)
-    x2 = api.flr(x2)
-    y2 = api.flr(y2)
-    x3 = api.flr(x3)
-    y3 = api.flr(y3)
-    c = api.color(c)
-
-    local hy = max(y1, max(y2, y3))
-    local hx
-
-    if y1 == hy then
-      hx = x1
-    elseif y2 == hy then
-      hx = x2
-    else
-      hx = x3
-    end
-
-    local ly = min(y1, min(y2, y3))
-    local lx
-
-    if y1 == ly then
-      lx = x1
-    elseif y2 == ly then
-      lx = x2
-    else
-      lx = x3
-    end
-
-    local my = mid(y1, y2, y3)
-    local mx
-
-    if y1 == my then
-      mx = x1
-    elseif y2 == my then
-      mx = x2
-    else
-      mx = x3
-    end
-
-    local k = my - ly
-
-    for i = 0, k do
-      local xa, xb,y
-      y = ly + i
-      xa = lx + (i / k) * (mx - lx)
-      xb = lx + (i / (hy - ly)) * (hx - lx)
-
-      api.line(xa, y, xb, y, c)
-    end
+  function api.triangle(x1, y1, x2, y2, x3, y3, line, white)
+    Verify(x1,"number","X1")
+    Verify(y1,"number","Y1")
+    Verify(x2,"number","X2")
+    Verify(y2,"number","Y2")
+    Verify(x3,"number","X3")
+    Verify(y3,"number","Y3")
     
-    local k2 = hy - my
+    x1, y1 = floor(x1), floor(y1)
+    x2, y2 = floor(x2), floor(y2)
+    x3, y3 = floor(x3), floor(y3)
+    
+    if line then
 
-    for i = 0, k2 do
-      local xa, xb ,y
-      y = my + i
-      xa = mx + (i / k2) * (hx - mx)
-      xb = lx + ((i + k) / (hy - ly)) * (hx - lx)
-      api.line(xa, y, xb, y, c)
-    end
-  end
-
-  -- Draws a polygon
-  function api.poly(...)
-    local points = { ... }
-
-    for i = 1, #points / 2 do
-      local x0 = api.fl(points[i])
-      local y0 = api.fl(points[i + 1])
-
-      local x1, y1
-
-      if i + 3 == #points then
-        x1, y1 = points[1], points[2]
+      api.line(x1, y1, x2, y2, white)
+      api.line(x2, y2, x3, y3, white)
+      api.line(x1, y1, x3, y3, white)
+    
+    else
+      
+      local hy = max(y1, max(y2, y3))
+      local hx
+  
+      if y1 == hy then
+        hx = x1
+      elseif y2 == hy then
+        hx = x2
       else
-        x1, y1 = points[i + 2], points[i + 3]
+        hx = x3
+      end
+      
+      local ly = min(y1, min(y2, y3))
+      local lx
+      
+      if y1 == ly then
+        lx = x1
+      elseif y2 == ly then
+        lx = x2
+      else
+        lx = x3
+      end
+      
+      local my = mid(y1, y2, y3)
+      local mx
+      
+      if y1 == my then
+        mx = x1
+      elseif y2 == my then
+        mx = x2
+      else
+        mx = x3
       end
 
-      api.line(x0, y0, x1, y1)
+      local k = my - ly
+
+      for i = 0, k do
+        local xa, xb,y
+        y = ly + i
+        xa = lx + (i / k) * (mx - lx)
+        xb = lx + (i / (hy - ly)) * (hx - lx)
+        
+        api.line(xa, y, xb, y, white)
+      end
+    
+      local k2 = hy - my
+
+      for i = 0, k2 do
+        local xa, xb ,y
+        y = my + i
+        xa = mx + (i / k2) * (hx - mx)
+        xb = lx + ((i + k) / (hy - ly)) * (hx - lx)
+        api.line(xa, y, xb, y, white)
+      end
+      
     end
   end
 
   -- Fills a polygon
-  function api.polyfill(...)
+  function api.polyon(white,...)
     local triangles = love.math.triangulate(...)
 
     for i, t in ipairs(triangles) do
-      trifill(t[1], t[2], t[3], t[4], t[5], t[6])
+      api.triangle(t[1], t[2], t[3], t[4], t[5], t[6], false, white)
     end
   end
 
