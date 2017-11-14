@@ -9,7 +9,7 @@
 local bit = require("bit")
 local lshift,rshift,band,bor,bxor = bit.lshift, bit.rshift, bit.band, bit.bor, bit.bxor
 
-local min,max,floor = math.min, math.max, math.floor
+local min,max,floor,abs = math.min, math.max, math.floor, math.abs
 local function mid(x, y, z)
   if x > y then x, y = y, x end
   
@@ -319,83 +319,82 @@ return function(Config)
     end
   end
   
-  -----
+  local function horizontalLine(x0, y, x1, white)
+  	 for x = max(0, x0), min(SWidth - 1, x1) do
+   		pset(x, y, white)
+    end
+  end
+
+  local function plotPoints(cx, cy, x, y, white)
+    horizontalLine(cx - x, cy + y, cx + x, white)
+    
+    if y ~= 0 then
+      horizontalLine(cx - x, cy - y, cx + x, white)
+    end
+  end
 
   -- Draws a circle
-  function api.circ(ox, oy, r, c)
-  	ox = api.flr(ox)
-  	oy = api.flr(oy)
-  	r = api.flr(r)
-  	c = api.color(c)
+  function api.circle(ox, oy, r, line, white)
+    Verify(ox,"number","X")
+    Verify(oy,"number","Y")
+    Verify(r,"number","Radius")
+    
+    ox, oy, r = floor(ox), floor(oy), abs(floor(r))
+    
+    if line then
+    
+      local x = r
+      local y = 0
+     	local decisionOver2 = 1 - x
+      
+     	while y <= x do
+  	   	pset(ox + x, oy + y, white)
+  	   	pset(ox + y, oy + x, white)
+  	   	pset(ox - x, oy + y, white)
+     		pset(ox - y, oy + x, white)
+  	   	pset(ox - x, oy - y, white)
+     		pset(ox - y, oy - x, white)
+     		pset(ox + x, oy - y, white)
+       pset(ox + y, oy - x, white)
+       
+     		y = y + 1
+       
+     		if decisionOver2 < 0 then
+         decisionOver2 = decisionOver2 + 2 * y + 1
+  	   	else
+         x = x - 1
+         decisionOver2 = decisionOver2 + 2 * (y - x) + 1
+     		end
+     end
+     
+    else
+     
+     local x = r
+     local y = 0
+   	 local err = 1 - r
+     
+     	while y <= x do
+        plotPoints(ox, oy, x, y, white)
 
-  	local x = r
-  	local y = 0
-  	local decisionOver2 = 1 - x
+  	     if err < 0 then
+  			    err = err + 2 * y + 3
+  	     else
+  			    if x ~= y then
+  				     plotPoints(ox, oy, y, x, white)
+  			    end
 
-  	while y <= x do
-  		api.pset(ox + x, oy + y, c)
-  		api.pset(ox + y, oy + x, c)
-  		api.pset(ox - x, oy + y, c)
-  		api.pset(ox - y, oy + x, c)
-  		api.pset(ox - x, oy - y, c)
-  		api.pset(ox - y, oy - x, c)
-  		api.pset(ox + x, oy - y, c)
-  		api.pset(ox + y, oy - x, c)
+  		     	x = x - 1
+  			    err = err + 2 * (y - x) + 3
+  		   end
 
-  		y = y + 1
-
-  		if decisionOver2 < 0 then
-  			decisionOver2 = decisionOver2 + 2 * y + 1
-  		else
-  			x = x - 1
-  			decisionOver2 = decisionOver2 + 2 * (y - x) + 1
-  		end
-  	end
+  		   y = y + 1
+  	  end
+     
+    end
   end
-
-  local function horizontalLine(x0, y, x1, c)
-  	for x = max(0, x0), min(WIDTH - 1, x1) do
-  		api.pset(x, y, c)
-  	end
-  end
-
-  local function plotPoints(cx, cy, x, y, c)
-  	horizontalLine(cx - x, cy + y, cx + x, c)
-
-  	if y ~= 0 then
-  		horizontalLine(cx - x, cy - y, cx + x, c)
-  	end
-  end
-
-  -- Fills a circle
-  function api.circfill(cx, cy, r, c)
-  	cx = api.flr(cx)
-  	cy = api.flr(cy)
-  	r = api.flr(r)
-  	c = api.color(c)
-
-  	local x = r
-  	local y = 0
-  	local err = 1 - r
-
-  	while y <= x do
-  		plotPoints(cx, cy, x, y, c)
-
-  		if err < 0 then
-  			err = err + 2 * y + 3
-  		else
-  			if x ~= y then
-  				plotPoints(cx, cy, y, x, c)
-  			end
-
-  			x = x - 1
-  			err = err + 2 * (y - x) + 3
-  		end
-
-  		y = y + 1
-  	end
-  end
-
+  
+  -----
+  
   -- Draws a triangle
   function api.tri(x1, y1, x2, y2, x3, y3, c)
     x1 = api.flr(x1)
