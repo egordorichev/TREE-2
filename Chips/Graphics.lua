@@ -222,7 +222,7 @@ return function(Config)
   
   --Set the pattern
   function api.pattern(pat,bpl)
-    if not pat then pattern = nil end
+    if not pat then pattern = nil return end
     Verify(pat,"table","pattern")
     Verify(bpl,"number","Bytes Per Line")
     
