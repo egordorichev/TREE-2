@@ -299,35 +299,38 @@ return function(Config)
     
     x0, y0 = floor(x0), floor(y0)
     x1, y1 = floor(x1), floor(y1)
-
-    if x0 > x1 then -- Make sure, that x0 is smaller
-      x0, x1 = x1, x0
-    end
-
-    if y0 > y1 then -- Make sure, that y0 is smaller
-      y0, y1 = y1, y0
-    end
-
-    local dx = x1 - x0
-    local dy = y1 - y0
-
-    if dx < 1 and dy < 1 then
-      -- The line is just a point
-      pset(x0, y1, white)
+    
+    local dx, dy = abs(x1-x0), abs(y1-y0)
+    
+    if dx == 0 then --vertical line
+      for y=min(y0,y1), max(y0,y1) do
+        pset(x0,y,white)
+      end
+      
+      return
+    elseif dy == 0 then --horizental line
+      for x=min(x0,x1), max(x0,x1) do
+        pset(x,y0,white)
+      end
+      
       return
     end
-
+    
+    local m = (y1 - y0) / (x1 - x0)
+    local p = y0 - m*x0
+    
     if dx > dy then
-     	for x = x0, x1 do
-       	local y = y0 + dy * (x - x0) / dx
-    	  	pset(x, y, white)
-     	end
+      for x = min(x0,x1), max(x0,x1) do
+        local y = m*x + p
+        pset(x,y, white)
+      end
     else
-     	for y = y0, y1 do
-    	  	local x = x0 + dx * (y - y0) / dy
-     		pset(x, y, white)
-     	end
+      for y = min(y0,y1), max(y0,y1) do
+        local x = (y - p) / m
+        pset(x,y, white)
+      end
     end
+    
   end
 
   -- Draws a rect
