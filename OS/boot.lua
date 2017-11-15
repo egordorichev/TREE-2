@@ -119,8 +119,6 @@ for id,pat in ipairs(patterns) do
   end
 end
 
---Graphics.pattern(patterns[1],1)
-
 while true do
 
   if inc then
@@ -142,26 +140,11 @@ while true do
   Graphics.circle(240,160,r+8,true)
   Graphics.circle(240,160,r+7,true)
   
-  Graphics.triangle(5,5,30,5,5,30,true)
-  --Graphics.triangle(8,8,27,8,8,27,false,true)
+  --Graphics.triangle(5,5,5,30,30,5,true)
+  --Graphics.triangle(8,8,27,8,8,27,false)
   
   --Graphics.rect(240-r/2,160-r/2,r,r)
   --Graphics.rect(240-r/2-2,160-r/2-2,r+4,r+4,true)
   
   Graphics.flip()
 end
-
---[[local P = tonumber(10101010,2)
-
-local VRAMLine = 480/8
-local A=0
-
-for Y=0,319 do
-  for i=1,VRAMLine do
-    RAM.poke(A,math.random(0,255))
-    A = A + 1
-  end
-  Graphics.flip()
-end]]
-
---Graphics.flip()
