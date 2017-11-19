@@ -120,31 +120,28 @@ for id,pat in ipairs(patterns) do
 end
 
 while true do
-
   if inc then
     r = r + speed
   else
     r = r - speed
   end
-  
+
   if inc and r >= t then inc = false
   elseif r <= 0 and not inc then
     inc = true
     pid = (pid + 1) % (#patterns + 1)
     Graphics.pattern(patterns[pid],1)
   end
-  
-  Graphics.clear(true)
-  
-  Graphics.circle(240,160,r)
-  Graphics.circle(240,160,r+8,true)
-  Graphics.circle(240,160,r+7,true)
-  
+
+  Graphics.tri(math.random(0, 479), math.random(0, 319),
+    math.random(0, 479), math.random(0, 319),
+    math.random(0, 479), math.random(0, 319), false, math.random() > 0.5)
+
   --Graphics.triangle(5,5,5,30,30,5,true)
   --Graphics.triangle(8,8,27,8,8,27,false)
-  
+
   --Graphics.rect(240-r/2,160-r/2,r,r)
   --Graphics.rect(240-r/2-2,160-r/2-2,r+4,r+4,true)
-  
+
   Graphics.flip()
 end
