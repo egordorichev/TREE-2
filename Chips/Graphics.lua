@@ -498,11 +498,21 @@ return function(Config)
             local r = FontImage:getPixel(x1 + ((code - 32) * 6), y1)
 
             if r == 0 then
-              pset(x + (cursor * 6) + x1, y + y1 + (line * 9), white or true)
+              pset(x + (cursor * 6) + x1, y + y1 + (line * 9), white)
             end
           end
         end
       cursor = cursor + 1
+      end
+    end
+  end
+
+  function api.icon(icon, x, y, white)
+    for yy = 1, #icon do
+      for xx = 1, #icon[yy] do
+        if icon[yy]:sub(xx, xx) == "1" then
+          pset(x + xx, y + yy, false)
+        end
       end
     end
   end

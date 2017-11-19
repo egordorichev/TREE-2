@@ -6,142 +6,60 @@
 
 -- NutOS Boot File (First file loaded by the bootloader).
 
--- Print the logo ;)
---[=[print([[
+local apps = {}
+-- local CodeEditor = require("OS.Apps.CodeEditor")
 
-       %#
-          %
-   (%######%%(
-&&%%#(###((##(((((,
-@&&%&&%%#(#(#(((/(#
- (&@@@&%&%&&&&%%%%&
- .%&&&%#((((((%#/(
-  #%%%##(//**,,,*
-  ,%%%##((//**,*,
-   /%%%%#((////
-     %&&%####.
-       .&&.
-]])
-
-print("Loading NutOS...")
-
-local events = require("Engine.events")
-local openedApps = {}
-
--- Opens an app window
-local function openApp(class)
-  local app = class()
-
-  print("Loading " .. (app.name or "untitled app") .. "...")
-  table.insert(openedApps, app)
+local function triggerCallback(app, name, ...)
+  --[[ if type(app.sandbox[name]) == "function" then
+    app.sandbox[name](...)
+  end]]
 end
 
-openApp(require("OS.Apps.CodeEditor"))
+local function registerApp(class)
+  -- local app = class()
 
-events:registerEvent("love:graphics", function()
-  -- Draw windows
-  for _, a in pairs(openedApps) do
-    -- TODO: draw the window
-    if a.draw then
-      -- TODO: allign camera pos, clip, etc...
-      a.draw(a)
-    end
-  end
-end)]=]
+  --[[
+  local w = app.sandbox.width
+  local h = app.sandbox.height
+  ]]
 
-local r = 0
-local inc = true
-local t = 64
-local speed = 1
-local pid = 0
+  local holder = {
+    app = app,
+    x = (480 - (w or 128)) / 2,
+    y = (320 - (h or 128)) / 2,
+    t = "Utitled",
+    w = w or 128,
+    h = h or 128,
+    sandbox = nil -- TODO: make one
+  }
 
-local patterns = {
-  {
-    11111000,
-    01110100,
-    00100010,
-    01000111,
-    10001111,
-    00010111,
-    00100010,
-    01110001
-  }
-  ,
-  {
-    00100000,
-    01010000,
-    10001000,
-    10001000,
-    10001000,
-    10001000,
-    00000101,
-    00000010
-  }
-  ,
-  {
-    10111111,
-    00000000,
-    10111111,
-    10111111,
-    10110000,
-    10110000,
-    10110000,
-    10110000
-  }
-  ,
-  {
-    10000000,
-    10000000,
-    01000001,
-    00111110,
-    00001000,
-    00001000,
-    00010100,
-    11100011
-  }
-  ,
-  {
-    01110111,
-    10001001,
-    10001111,
-    10001111,
-    01110111,
-    10011000,
-    11111000,
-    11111000,
-    11111000
-  }
-}
-
-for id,pat in ipairs(patterns) do
-  for bid, byte in ipairs(pat) do
-    pat[bid] = tonumber(byte,2)
-  end
+  -- TODO: do this in thread
+  triggerCallback(app, "_init")
+  table.insert(apps, holder)
 end
+
+registerApp()
 
 while true do
-  if inc then
-    r = r + speed
-  else
-    r = r - speed
+  Graphics.clear()
+
+  for i, app in ipairs(apps) do
+    Graphics.rect(app.x - 2, app.y - 11, app.w + 4, app.h + 13, false, true)
+    Graphics.rect(app.x, app.y, app.w, app.h, false, false)
+    Graphics.print(app.t, app.x, app.y - 9, false)
+
+    Graphics.icon({
+      "10001",
+      "01010",
+      "00100",
+      "01010",
+      "10001"
+    }, app.x + app.w - 7, app.y - 9, false)
+
+    -- TODO: focus the camera
+    triggerCallback(app, "_update")
+    triggerCallback(app, "_draw")
   end
-
-  if inc and r >= t then inc = false
-  elseif r <= 0 and not inc then
-    inc = true
-    pid = (pid + 1) % (#patterns + 1)
-    Graphics.pattern(patterns[pid],1)
-  end
-
-  Graphics.tri(math.random(0, 479), math.random(0, 319),
-    math.random(0, 479), math.random(0, 319),
-    math.random(0, 479), math.random(0, 319), false, math.random() > 0.5)
-
-  --Graphics.triangle(5,5,5,30,30,5,true)
-  --Graphics.triangle(8,8,27,8,8,27,false)
-
-  --Graphics.rect(240-r/2,160-r/2,r,r)
-  --Graphics.rect(240-r/2-2,160-r/2-2,r+4,r+4,true)
 
   Graphics.flip()
 end
