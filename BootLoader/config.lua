@@ -20,7 +20,7 @@ conf.Chips = {
     Chip = "RAM",
     Size = 19200
   },
-  
+
   {
     Chip = "Graphics",
     Title = "TREE-2 "..conf.VersionStr,
@@ -28,7 +28,7 @@ conf.Chips = {
     Height = 320,
     RAMAddress = 0,
     Scale = 1,
-    PixelPerfect = false
+    PixelPerfect = true
   },
 
   {

@@ -40,10 +40,97 @@ end
 
 registerApp()
 
+local patterns = {
+  {
+    11111000,
+    01110100,
+    00100010,
+    01000111,
+    10001111,
+    00010111,
+    00100010,
+    01110001
+  }
+  ,
+  {
+    00100000,
+    01010000,
+    10001000,
+    10001000,
+    10001000,
+    10001000,
+    00000101,
+    00000010
+  }
+  ,
+  {
+    10111111,
+    00000000,
+    10111111,
+    10111111,
+    10110000,
+    10110000,
+    10110000,
+    10110000
+  }
+  ,
+  {
+    10000000,
+    10000000,
+    01000001,
+    00111110,
+    00001000,
+    00001000,
+    00010100,
+    11100011
+  }
+  ,
+  {
+    01110111,
+    10001001,
+    10001111,
+    10001111,
+    01110111,
+    10011000,
+    11111000,
+    11111000,
+    11111000
+  }
+  ,
+  {
+    01010101,
+    10101010,
+    01010101,
+    10101010,
+    01010101,
+    10101010,
+    01010101,
+    10101010
+  }
+}
+
+for id,pat in ipairs(patterns) do
+  for bid, byte in ipairs(pat) do
+    pat[bid] = tonumber(byte,2)
+  end
+end
+
+local function renderVM()
+  Graphics.rect(0, 0, 480, 9, false, true)
+  Graphics.line(0, 9, 480, 9, false)
+  Graphics.print("TREE-2", 1, 1, false)
+
+  local time = os.date("%I:%M %p")
+  Graphics.print(time, 479 - #time * 6, 1, false)
+end
+
 while true do
-  Graphics.clear()
+  Graphics.pattern(patterns[6], 1)
+  Graphics.rect(0, 0, 480, 320, false, true)
+  Graphics.pattern()
 
   for i, app in ipairs(apps) do
+    Graphics.rect(app.x - 3, app.y - 12, app.w + 6, app.h + 15, true, false)
     Graphics.rect(app.x - 2, app.y - 11, app.w + 4, app.h + 13, false, true)
     Graphics.rect(app.x, app.y, app.w, app.h, false, false)
     Graphics.print(app.t, app.x, app.y - 9, false)
@@ -60,6 +147,8 @@ while true do
     triggerCallback(app, "_update")
     triggerCallback(app, "_draw")
   end
+
+  renderVM()
 
   Graphics.flip()
 end
