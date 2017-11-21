@@ -123,7 +123,7 @@ local function renderVM()
   local time = os.date("%I:%M %p")
   Graphics.print(time, 479 - #time * 6, 1, false)
 end
-
+--[[
 while true do
   Graphics.pattern(patterns[6], 1)
   Graphics.rect(0, 0, 480, 320, false, true)
@@ -152,3 +152,9 @@ while true do
 
   Graphics.flip()
 end
+]]
+
+--Draw splash
+local splash = fs.read("/rom/Splash.nbin")
+RAM.memset(0,splash) --Draw the splash
+Graphics.flip()
