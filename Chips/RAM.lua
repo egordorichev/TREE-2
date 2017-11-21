@@ -165,7 +165,7 @@ return function(Config)
       length = ramSize - addr + 1
     end
     
-    for i=1,length do
+    for i=1,length-1 do
       api.poke(addr+i-1, strByte(value,i))
     end
   end
