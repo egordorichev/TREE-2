@@ -82,5 +82,10 @@ return function(config)
   
   api.log = print --Console print.
   
+  --Hook update event
+  events:registerEvent("love:update", function(dt)
+    devkit.triggerEvent("update",dt)
+  end)
+  
   return api, {"Processor"}, devkit
 end
