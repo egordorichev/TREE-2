@@ -50,3 +50,6 @@ function dofile(path,...)
   if not ret[1] then return error(ret[2]) end
   return select(2,unpack(ret))
 end
+
+--Load the Package System--
+dofile("/rom/Seed/package.lua")
