@@ -142,13 +142,13 @@ return function(Machine, APIS)
   GLOB.load = function(iter,chunkname)
     if type(iter) ~= "function" then return error("Chunk Iterator should be a function, provided: "..type(iter)) end
     
-    if chunkname and type(chunkname) then return error("Chunk Name should be a string or a nil, provided: "..type(chunkname)) end
+    if chunkname and type(chunkname) ~= "string" then return error("Chunk Name should be a string or a nil, provided: "..type(chunkname)) end
     
     local first = true
     local function i()
       local line = iter()
       if first and line then
-        if lua:sub(1,3) == _LuaBCHeader then return error("LOADING BYTECODE IS NOT ALLOWED, YOU HACKER !") end
+        if line:sub(1,3) == _LuaBCHeader then return error("LOADING BYTECODE IS NOT ALLOWED, YOU HACKER !") end
         first = false
       end
       return line
