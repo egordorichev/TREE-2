@@ -140,7 +140,7 @@ return function(Config)
     length = floor(length)
     
     if addr+length >= ramSize then
-      length = ramSize - addr + 1
+      length = ramSize - addr
     end
     
     local str, nid = {}, 1 --nid -> NextID
@@ -162,10 +162,10 @@ return function(Config)
     local length = value:len()
     
     if addr+length >= ramSize then
-      length = ramSize - addr + 1
+      length = ramSize - addr
     end
     
-    for i=1,length-1 do
+    for i=1,length do
       api.poke(addr+i-1, strByte(value,i))
     end
   end
@@ -186,11 +186,11 @@ return function(Config)
     if length == 0 then return end
     
     if from+length >= ramSize then
-      length = ramSize - from + 1
+      length = ramSize - from
     end
     
     if to+length >= ramSize then
-      length = ramSize - to + 1
+      length = ramSize - to
     end
     
     for i=0,length-1 do
