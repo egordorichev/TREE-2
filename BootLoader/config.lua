@@ -20,6 +20,10 @@ conf.Chips = {
     Chip = "RAM",
     Size = 19200
   },
+  
+  {
+    Chip = "Processor"
+  },
 
   {
     Chip = "Graphics",
