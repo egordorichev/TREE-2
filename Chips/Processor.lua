@@ -80,5 +80,7 @@ return function(config)
     
   end
   
+  api.log = print --Console print.
+  
   return api, {"Processor"}, devkit
 end
