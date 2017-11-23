@@ -130,10 +130,10 @@ return function(Config)
 
     WSWidth, WSHeight = SWidth*WScale, SHeight*WScale
 
-    WX = (WWidth - WSWidth)/2 + 0.5
-    WY = (WHeight - WSHeight)/2 + 0.5
+    WX = (WWidth - WSWidth)/2
+    WY = (WHeight - WSHeight)/2
 
-    if onMobile then WY = 0.5 end
+    if onMobile then WY = 0 end
 
     _ShouldDraw = true
   end)
