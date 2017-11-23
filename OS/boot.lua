@@ -4,7 +4,7 @@
 ]]
 
 --Splash Image--
-local splash = fs.read("/rom/Seed/Splash.nbin")
+local splash = fs.read("/rom/Boot/Splash.nbin")
 RAM.memset(0,splash) --Draw the splash
 Graphics.flip()
 
@@ -52,4 +52,4 @@ function dofile(path,...)
 end
 
 --Load the Package System--
-dofile("/rom/Seed/package.lua")
+dofile("/rom/Boot/package.lua")
