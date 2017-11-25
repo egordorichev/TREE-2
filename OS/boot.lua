@@ -12,16 +12,16 @@ Graphics.flip()
 function loadfile(path)
   if not fs.exists(path) then return error("File doesn't exists !") end
   if fs.isDir(path) then return error("Can't load a folder !") end
-  
+
   local lines = fs.lines(path)
-  
+
   local function iter()
     local line = lines()
     if line then
       return line.."\n"
     end
   end
-  
+
   local ok, chunk = pcall(load,iter,path)
   if ok then
     return chunk
@@ -33,19 +33,19 @@ end
 function dofile(path,...)
   if not fs.exists(path) then return error("File doesn't exists !") end
   if fs.isDir(path) then return error("Can't load a folder !") end
-  
+
   local lines = fs.lines(path)
-  
+
   local function iter()
     local line = lines()
     if line then
       return line.."\n"
     end
   end
-  
+
   local ok, chunk = pcall(load,iter,path)
   if not ok then return error(chunk) end
-  
+
   local ret = {pcall(chunk,...)}
   if not ret[1] then return error(ret[2]) end
   return select(2,unpack(ret))
@@ -53,3 +53,4 @@ end
 
 --Load the Package System--
 dofile("/rom/Boot/package.lua")
+dofile("/rom/terminal.lua")
