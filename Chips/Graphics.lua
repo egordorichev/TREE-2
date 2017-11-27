@@ -50,10 +50,9 @@ return function(Config)
   local VRAMEAddress = VRAMSAddress + VRAMSize - 1
 
   --The color palette
-  local Palette = {
-    {255, 255, 255, 255} --1: White
-  }
+  local Palette = {}
   Palette[0] = {0, 0, 0, 255} --0: Black
+  Palette[1] = {0, 0, 0, 255} --1: White
 
   --The screen image
   love.graphics.setDefaultFilter("nearest")

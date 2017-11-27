@@ -3,6 +3,11 @@
 - Rami Sabbagh (RamiLego4Game)
 ]]
 
+--White color
+RAM.poke(19203,255) --RED
+RAM.poke(19204,255) --GREEN
+RAM.poke(19205,255) --BLUE
+
 --Splash Image--
 local splash = fs.read("/rom/Boot/Splash.nbin")
 RAM.memset(0,splash) --Draw the splash
