@@ -167,7 +167,7 @@ return function(Config)
   end)
   
   --DrawState (DS) Variables
-  --[[DS Layout: 64 bytes
+  --[[DS Layout: 32 bytes
   -- 3 bytes color 0
   -- 3 bytes color 1
   -- 1 packed byte (1 pattern flag)
@@ -176,8 +176,15 @@ return function(Config)
   ]]
   
   local DSRAMSAddress = Config.DSRAMAddress
-  local DSRAMSize = 64
+  local DSRAMSize = 32
   local DSRAMEAddress = DSRAMSAddress + DSRAMSize - 1
+  
+  local PatternFill = false --The pattern fill flag
+  local Pattern = {} --The pattern.
+  for i=1,16*8 do Pattern[i] = false end --Initialize the pattern table.
+  local PatternBPL = 0 --The pattern bytes per line.
+  local PatternW = 0 --The pattern width in pixels.
+  local PatternH = 0 --The pattern height.
   
   events:registerEvent("RAM:poke", function(addr, value, oldvalue)
     
@@ -189,9 +196,20 @@ return function(Config)
     elseif addr < 6 then --Color 1
       Palette[1][addr-2] = value
     elseif addr == 6 then --Packed Byte
+      --Pattern Fill Flag
+      PatternFill = (band(value,0x01) > 0)
       
-    elseif addr < 23 then --Pattern
+    elseif addr == 7 then --Pattern Dimenions
+      PatternBPL = band(value, 0xF) --The first nibble
+      PatternW = PatternBPL * 8
+      PatternH = band(rshift(value, 4), 0xF) --The second nibble.
+    elseif addr < 24 then --Pattern
+      local bitnum = (addr-8)*8 +1
       
+      for bn=bitnum+7,bitnum,-1 do
+        Pattern[bn] = (band(value,1) == 1)
+        value = rshift(value,1)
+      end
     end
     
     _ShouldDraw = true
@@ -208,9 +226,15 @@ return function(Config)
     elseif addr < 6 then --Color 1
       Palette[1][addr-2] = value
     elseif addr == 6 then --Packed Byte
-      
-    elseif addr < 23 then --Pattern
-      
+      if bn == 1 then --Pattern Fill Flag
+        PatternFill = b
+      end
+    elseif addr == 7 then --Pattern Dimensions
+      PatternBPL = band(value, 0xF) --The first nibble
+      PatternW = PatternBPL * 8
+      PatternH = band(rshift(value, 4), 0xF) --The second nibble.
+    elseif addr < 24 then --Pattern
+      Pattern[(addr-8)*8 + bn] = b
     end
     
     _ShouldDraw = true
@@ -252,9 +276,6 @@ return function(Config)
   local devkit = {} -- The graphics devkit
   local api = {} -- The graphics API
 
-  local pattern --The fill pattern
-  local patternWidth, patternHeight = 0,0
-
   -- Flip the screen
   function api.flip()
     _ShouldDraw = true
@@ -271,44 +292,14 @@ return function(Config)
     end
   end
 
-  --Set the pattern
-  function api.pattern(pat,bpl)
-    if not pat then pattern = nil return end
-    Verify(pat,"table","pattern")
-    Verify(bpl,"number","Bytes Per Line")
-
-    local height = ceil(#pat / bpl)
-    local width = bpl*8
-
-    pattern = {}
-
-    for y=0,height-1 do
-      pattern[y] = {}
-      for b=1,bpl do
-        local v = pat[y*bpl + b] or error("b: "..b.." y: "..y)
-        local tb = 128 --0b10000000
-        for i=0,7 do
-          table.insert(pattern[y],band(v,tb) == 0)
-          tb = rshift(tb,1)
-        end
-      end
-    end
-
-    patternWidth, patternHeight = width, height
-  end
-
   -- Sets one pixel to white or black
   function api.pset(x, y, white)
     Verify(x,"number","X Pos")
     Verify(y,"number","Y Pos")
 
     x, y = VerifyPos(x,y)
-
-    if pattern then
-      local px = x % patternWidth  +1
-      local py = y % patternHeight
-      if pattern[py][px] then return end
-    end
+    
+    if PatternFill and not Pattern[y*8+x] then return end
 
     local addr = VRAMSAddress
     addr = addr + y * VRAMLine
