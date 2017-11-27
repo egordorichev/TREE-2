@@ -140,9 +140,6 @@ print("Post Initialize Chips")
 events:triggerEvent("Chip:PostInitialize",APIS,DevKits,Machine)
 print("--==Bootloader End==--")
 
--- Run debug script
-love.filesystem.load("/BootLoader/debug.lua")(APIS,DevKits)
-
 Machine.Resume() --Start the operating system
 
 return Machine
