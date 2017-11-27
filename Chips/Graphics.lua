@@ -43,8 +43,8 @@ return function(Config)
 
   if floor(SWidth/8) ~= SWidth/8 then error("Screen width should be dividable by 8 !") end
 
-  --The RAM Variables
-  local VRAMSAddress = Config.RAMAddress
+  --The VRAM Variables
+  local VRAMSAddress = Config.VRAMAddress
   local VRAMLine = SWidth/8
   local VRAMSize = SHeight*VRAMLine
   local VRAMEAddress = VRAMSAddress + VRAMSize - 1
@@ -166,6 +166,58 @@ return function(Config)
       Machine.Resume()
     end
   end)
+  
+  --DrawState (DS) Variables
+  --[[DS Layout: 64 bytes
+  -- 3 bytes color 0
+  -- 3 bytes color 1
+  -- 1 packed byte (1 pattern flag)
+  -- 1 byte: pattern dimensions
+  -- 16 byte: pattern
+  ]]
+  
+  local DSRAMSAddress = Config.DSRAMAddress
+  local DSRAMSize = 64
+  local DSRAMEAddress = DSRAMSAddress + DSRAMSize - 1
+  
+  events:registerEvent("RAM:poke", function(addr, value, oldvalue)
+    
+    if addr < DSRAMSAddress or addr > DSRAMEAddress then return end
+    addr = addr - DSRAMSAddress
+    
+    if addr < 3 then --Color 0
+      Palette[0][addr+1] = value
+    elseif addr < 6 then --Color 1
+      Palette[1][addr-2] = value
+    elseif addr == 6 then --Packed Byte
+      
+    elseif addr < 23 then --Pattern
+      
+    end
+    
+    _ShouldDraw = true
+    
+  end)
+  
+  events:registerEvent("RAM:setBit", function(addr, bn, b, value, oldvalue)
+    
+    if addr < DSRAMSAddress or addr > DSRAMEAddress then return end
+    addr = addr - DSRAMSAddress
+    
+    if addr < 3 then --Color 0
+      Palette[0][addr+1] = value
+    elseif addr < 6 then --Color 1
+      Palette[1][addr-2] = value
+    elseif addr == 6 then --Packed Byte
+      
+    elseif addr < 23 then --Pattern
+      
+    end
+    
+    _ShouldDraw = true
+    
+  end)
+  
 
   --== Userfriendly functions ==--
 
